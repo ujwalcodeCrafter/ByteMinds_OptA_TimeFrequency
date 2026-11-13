@@ -1,0 +1,174 @@
+"""
+NeuroLab Sidebar Navigation and Controls.
+"""
+import streamlit as st
+
+
+def render_sidebar():
+    """Render the main sidebar with navigation and branding."""
+    with st.sidebar:
+        # Branding
+        st.markdown("""
+        <div style="text-align: center; padding: 1rem 0;">
+            <h1 style="color: #00BCD4; margin-bottom: 0; font-size: 1.8rem;">🧠 NEUROLAB</h1>
+            <p style="color: #90CAF9; font-size: 0.85rem; margin-top: 0.2rem;">
+                Interactive EEG Time-Frequency Explorer
+            </p>
+        </div>
+        <hr style="border-color: #1e3a5f; margin: 0.5rem 0;">
+        """, unsafe_allow_html=True)
+        
+        # Navigation
+        page = st.radio(
+            "Navigation",
+            ["🏠 Overview", 
+             "📊 EEG Data", 
+             "🔬 Time-Frequency Explorer",
+             "📚 Learn the Concepts",
+             "🧪 Experiment Lab",
+             "✅ Knowledge Check", 
+             "💾 Export Results",
+             "ℹ️ About"],
+            label_visibility="collapsed"
+        )
+        
+        st.markdown("<hr style='border-color: #1e3a5f; margin: 0.5rem 0;'>", unsafe_allow_html=True)
+        
+        # Quick info
+        st.markdown("""
+        <div style="padding: 0.5rem; background: rgba(0,188,212,0.05); border-radius: 8px; border-left: 3px solid #00BCD4;">
+            <p style="font-size: 0.75rem; color: #B0BEC5; margin: 0;">
+                🎓 BCI Course Module<br>
+                Time-Frequency Analysis
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+    return page
+
+
+def render_analysis_controls(raw_data):
+    """Render the analysis parameter controls in sidebar."""
+    with st.sidebar:
+        st.markdown("### ⚙️ Analysis Parameters")
+        
+        # Channel selection
+        channel = st.selectbox(
+            "EEG Channel",
+            raw_data.ch_names,
+            index=raw_data.ch_names.index('Oz') if 'Oz' in raw_data.ch_names else 0,
+            help="Select which EEG electrode to analyze"
+        )
+        
+        # Method selection
+        method = st.selectbox(
+            "Analysis Method",
+            ['Morlet Wavelet', 'Multitaper', 'STFT'],
+            help="Choose the time-frequency decomposition method"
+        )
+        method_key = {'Morlet Wavelet': 'morlet', 'Multitaper': 'multitaper', 'STFT': 'stft'}[method]
+        
+        # Frequency range
+        st.markdown("**Frequency Range (Hz)**")
+        nyquist = raw_data.info['sfreq'] / 2.0
+        col1, col2 = st.columns(2)
+        with col1:
+            fmin = st.number_input("Min Freq", min_value=0.5, max_value=nyquist - 1, 
+                                   value=1.0, step=0.5, help="Minimum frequency to analyze")
+        with col2:
+            fmax = st.number_input("Max Freq", min_value=1.0, max_value=nyquist,
+                                   value=min(45.0, nyquist), step=1.0, 
+                                   help="Maximum frequency (limited by Nyquist)")
+        
+        # Ensure fmin < fmax
+        if fmin >= fmax:
+            st.error("Min frequency must be less than max frequency!")
+        
+        # Number of frequency points
+        n_freqs = st.slider("Frequency Points", min_value=10, max_value=100, value=30,
+                           help="Number of frequency values to compute")
+        
+        # Time range
+        st.markdown("**Time Window (seconds)**")
+        duration = raw_data.times[-1]
+        time_range = st.slider("Time Range", 
+                               min_value=0.0, max_value=float(duration),
+                               value=(0.0, float(duration)),
+                               step=0.1,
+                               help="Select time interval to analyze")
+        
+        # Method-specific parameters
+        method_params = {}
+        
+        if method_key == 'morlet':
+            st.markdown("**Morlet Wavelet Settings**")
+            n_cycles = st.slider(
+                "Number of Cycles", min_value=1.0, max_value=30.0, value=7.0, step=0.5,
+                help="More cycles = better frequency resolution, worse temporal resolution"
+            )
+            method_params['n_cycles'] = n_cycles
+            
+        elif method_key == 'multitaper':
+            st.markdown("**Multitaper Settings**")
+            time_bandwidth = st.slider(
+                "Time-Bandwidth Product", min_value=1.0, max_value=10.0, value=4.0, step=0.5,
+                help="Higher values = more spectral smoothing, lower variance"
+            )
+            method_params['time_bandwidth'] = time_bandwidth
+            
+        elif method_key == 'stft':
+            st.markdown("**STFT Settings**")
+            sfreq = raw_data.info['sfreq']
+            max_win = min(1024, int(raw_data.n_times / 2))
+            window_length = st.slider(
+                "Window Length (samples)", min_value=32, max_value=max_win, 
+                value=min(256, max_win), step=16,
+                help="Longer windows = better frequency resolution, worse temporal resolution"
+            )
+            max_overlap = window_length - 1
+            overlap = st.slider(
+                "Overlap (samples)", min_value=0, max_value=max_overlap,
+                value=window_length // 2, step=8,
+                help="Number of overlapping samples between windows"
+            )
+            window_fn = st.selectbox(
+                "Window Function",
+                ['hann', 'hamming', 'blackman', 'bartlett', 'boxcar'],
+                help="Shape of the analysis window"
+            )
+            method_params['window_length'] = window_length
+            method_params['overlap'] = overlap
+            method_params['window_function'] = window_fn
+        
+        # Baseline correction
+        st.markdown("**Baseline Correction**")
+        baseline_mode = st.selectbox(
+            "Baseline Mode",
+            ['None', 'mean', 'ratio', 'db', 'percent', 'zscore'],
+            help="How to normalize power relative to a baseline period"
+        )
+        
+        baseline_range = None
+        if baseline_mode != 'None':
+            baseline_range = st.slider(
+                "Baseline Period (s)",
+                min_value=0.0, max_value=float(duration),
+                value=(0.0, min(2.0, float(duration) / 4)),
+                step=0.1,
+                help="Time interval used as reference baseline"
+            )
+        
+        params = {
+            'channel': channel,
+            'method': method_key,
+            'fmin': fmin,
+            'fmax': fmax,
+            'n_freqs': n_freqs,
+            'time_range': time_range,
+            'baseline_mode': baseline_mode if baseline_mode != 'None' else None,
+            'baseline_range': baseline_range,
+            'sfreq': raw_data.info['sfreq'],
+            **method_params
+        }
+        
+        return params
