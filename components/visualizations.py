@@ -11,7 +11,7 @@ import streamlit as st
 
 def create_linked_plots(eeg_data, eeg_times, power, freqs, tfr_times,
                         channel_name, method_name, time_range=None,
-                        annotations=None, baseline_mode=None):
+                        annotations=None, baseline_mode=None, colorscale='RdYlBu_r'):
     """
     Create two linked interactive plots:
     1. Original EEG signal with time selection
@@ -34,6 +34,7 @@ def create_linked_plots(eeg_data, eeg_times, power, freqs, tfr_times,
     time_range : tuple (tmin, tmax), optional
     annotations : list of dicts, optional
     baseline_mode : str, optional
+    colorscale : str, optional
     """
     
     # Convert EEG to microvolts for display
@@ -44,21 +45,26 @@ def create_linked_plots(eeg_data, eeg_times, power, freqs, tfr_times,
         shared_xaxes=True,
         vertical_spacing=0.08,
         subplot_titles=(
-            f'EEG Signal — Channel {channel_name}',
+            f'EEG Signal (µV) — Channel {channel_name}',
             f'Time-Frequency Spectrogram — {method_name}'
         ),
-        row_heights=[0.35, 0.65]
+        row_heights=[0.32, 0.68]
     )
+    
+    # Decimate display for raw signal if > 4000 points to ensure buttery-smooth 60fps pan/zoom
+    step = max(1, len(eeg_data) // 3000)
+    disp_times = eeg_times[::step]
+    disp_uv = eeg_uv[::step]
     
     # --- Plot 1: EEG Signal ---
     fig.add_trace(
         go.Scatter(
-            x=eeg_times,
-            y=eeg_uv,
+            x=disp_times,
+            y=disp_uv,
             mode='lines',
-            line=dict(color='#00BCD4', width=1),
-            name='EEG Signal',
-            hovertemplate='Time: %{x:.3f}s<br>Amplitude: %{y:.2f} µV<extra></extra>'
+            line=dict(color='#00BCD4', width=1.2),
+            name='EEG (µV)',
+            hovertemplate='Time: %{x:.3f}s<br>Potential: %{y:.2f} µV<extra></extra>'
         ),
         row=1, col=1
     )
@@ -80,26 +86,26 @@ def create_linked_plots(eeg_data, eeg_times, power, freqs, tfr_times,
             
             fig.add_vrect(
                 x0=onset, x1=onset + duration,
-                fillcolor=color, opacity=0.1,
+                fillcolor=color, opacity=0.12,
                 layer='below', line_width=0,
                 row=1, col=1
             )
             fig.add_annotation(
                 x=onset + duration / 2,
-                y=1.05,
+                y=1.06,
                 text=desc.replace('_', ' ').title(),
                 showarrow=False,
-                font=dict(size=10, color=color),
+                font=dict(size=10, color=color, family='sans-serif'),
                 xref='x', yref='y domain',
                 row=1, col=1
             )
     
     # Highlight selected time range
-    if time_range:
+    if time_range and (time_range[0] > eeg_times[0] or time_range[1] < eeg_times[-1]):
         fig.add_vrect(
             x0=time_range[0], x1=time_range[1],
-            fillcolor='#00BCD4', opacity=0.05,
-            layer='below', line=dict(color='#00BCD4', width=1, dash='dash'),
+            fillcolor='#00BCD4', opacity=0.08,
+            layer='below', line=dict(color='#00BCD4', width=1.5, dash='dash'),
             row=1, col=1
         )
     
@@ -108,13 +114,13 @@ def create_linked_plots(eeg_data, eeg_times, power, freqs, tfr_times,
     if baseline_mode == 'db':
         colorbar_title = 'Power (dB)'
     elif baseline_mode == 'percent':
-        colorbar_title = 'Power (% change)'
+        colorbar_title = 'Change (%)'
     elif baseline_mode == 'zscore':
-        colorbar_title = 'Power (z-score)'
+        colorbar_title = 'Z-Score'
     elif baseline_mode == 'ratio':
-        colorbar_title = 'Power (ratio)'
+        colorbar_title = 'Ratio'
     elif baseline_mode == 'mean':
-        colorbar_title = 'Power (baselined)'
+        colorbar_title = 'P - Base'
     else:
         colorbar_title = 'Power (V²/Hz)'
     
@@ -123,19 +129,20 @@ def create_linked_plots(eeg_data, eeg_times, power, freqs, tfr_times,
             x=tfr_times,
             y=freqs,
             z=power,
-            colorscale='RdYlBu_r',
+            colorscale=colorscale,
             colorbar=dict(
-                title=dict(text=colorbar_title, side='right'),
-                len=0.55,
-                y=0.22,
+                title=dict(text=colorbar_title, side='right', font=dict(size=11, color='#ECEFF1')),
+                len=0.60,
+                y=0.25,
+                thickness=16,
             ),
-            hovertemplate='Time: %{x:.3f}s<br>Freq: %{y:.1f} Hz<br>Power: %{z:.4e}<extra></extra>'
+            hovertemplate='Time: %{x:.3f}s<br>Freq: %{y:.1f} Hz<br>Power: %{z:.3e}<extra></extra>'
         ),
         row=2, col=1
     )
     
     # Highlight time range on spectrogram
-    if time_range:
+    if time_range and (time_range[0] > eeg_times[0] or time_range[1] < eeg_times[-1]):
         fig.add_vrect(
             x0=time_range[0], x1=time_range[1],
             fillcolor='rgba(0,0,0,0)', opacity=1,
@@ -145,19 +152,19 @@ def create_linked_plots(eeg_data, eeg_times, power, freqs, tfr_times,
     
     # --- Layout ---
     fig.update_layout(
-        height=700,
+        height=680,
         template='plotly_dark',
         paper_bgcolor='rgba(10, 15, 30, 0.8)',
         plot_bgcolor='rgba(10, 15, 30, 0.95)',
         font=dict(color='#B0BEC5', family='Inter, sans-serif'),
-        margin=dict(l=60, r=20, t=50, b=40),
+        margin=dict(l=65, r=25, t=45, b=40),
         showlegend=False,
     )
     
-    fig.update_xaxes(title_text='Time (s)', row=2, col=1, gridcolor='rgba(255,255,255,0.05)')
-    fig.update_yaxes(title_text='Amplitude (µV)', row=1, col=1, gridcolor='rgba(255,255,255,0.05)')
-    fig.update_yaxes(title_text='Frequency (Hz)', row=2, col=1, gridcolor='rgba(255,255,255,0.05)')
-    fig.update_xaxes(gridcolor='rgba(255,255,255,0.05)', row=1, col=1)
+    fig.update_xaxes(title_text='Time (seconds)', row=2, col=1, gridcolor='rgba(255,255,255,0.06)')
+    fig.update_yaxes(title_text='Amplitude (µV)', row=1, col=1, gridcolor='rgba(255,255,255,0.06)')
+    fig.update_yaxes(title_text='Frequency (Hz)', row=2, col=1, gridcolor='rgba(255,255,255,0.06)')
+    fig.update_xaxes(gridcolor='rgba(255,255,255,0.06)', row=1, col=1)
     
     return fig
 
@@ -278,5 +285,78 @@ def create_single_eeg_plot(eeg_data, times, channel_name, annotations=None):
     )
     fig.update_xaxes(gridcolor='rgba(255,255,255,0.05)')
     fig.update_yaxes(gridcolor='rgba(255,255,255,0.05)')
+    
+    return fig
+
+
+def create_three_method_comparison_plot(
+    p_morlet, f_morlet, t_morlet,
+    p_multi, f_multi, t_multi,
+    p_stft, f_stft, t_stft,
+    channel_name, colorscale='RdYlBu_r', baseline_mode=None
+):
+    """
+    Create a 3-row stacked comparison of all three time-frequency methods
+    (Morlet Wavelets vs Multitaper vs STFT) on the exact same signal.
+    """
+    cbar_title = 'Power (dB)' if baseline_mode == 'db' else ('Change (%)' if baseline_mode == 'percent' else 'Power (V²/Hz)')
+    
+    fig = make_subplots(
+        rows=3, cols=1,
+        shared_xaxes=True,
+        vertical_spacing=0.08,
+        subplot_titles=(
+            f'1. Morlet Wavelet Transform (Adaptive Resolution: {len(f_morlet)} freqs × {len(t_morlet)} time bins)',
+            f'2. Multitaper Method (DPSS Tapers / Variance Reduction: {len(f_multi)} freqs × {len(t_multi)} time bins)',
+            f'3. Short-Time Fourier Transform (Fixed Rectangular Grid: {len(f_stft)} freqs × {len(t_stft)} time bins)'
+        )
+    )
+    
+    # 1. Morlet
+    fig.add_trace(
+        go.Heatmap(
+            x=t_morlet, y=f_morlet, z=p_morlet,
+            colorscale=colorscale,
+            showscale=False,
+            hovertemplate='Morlet<br>Time: %{x:.2f}s<br>Freq: %{y:.1f}Hz<br>Power: %{z:.3e}<extra></extra>'
+        ),
+        row=1, col=1
+    )
+    
+    # 2. Multitaper
+    fig.add_trace(
+        go.Heatmap(
+            x=t_multi, y=f_multi, z=p_multi,
+            colorscale=colorscale,
+            showscale=False,
+            hovertemplate='Multitaper<br>Time: %{x:.2f}s<br>Freq: %{y:.1f}Hz<br>Power: %{z:.3e}<extra></extra>'
+        ),
+        row=2, col=1
+    )
+    
+    # 3. STFT
+    fig.add_trace(
+        go.Heatmap(
+            x=t_stft, y=f_stft, z=p_stft,
+            colorscale=colorscale,
+            colorbar=dict(title=dict(text=cbar_title, side='right'), len=0.8, y=0.5),
+            hovertemplate='STFT<br>Time: %{x:.2f}s<br>Freq: %{y:.1f}Hz<br>Power: %{z:.3e}<extra></extra>'
+        ),
+        row=3, col=1
+    )
+    
+    fig.update_layout(
+        height=780,
+        template='plotly_dark',
+        paper_bgcolor='rgba(10, 15, 30, 0.8)',
+        plot_bgcolor='rgba(10, 15, 30, 0.95)',
+        font=dict(color='#B0BEC5', family='Inter, sans-serif'),
+        margin=dict(l=65, r=60, t=50, b=40),
+    )
+    
+    fig.update_yaxes(title_text='Hz', row=1, col=1, gridcolor='rgba(255,255,255,0.06)')
+    fig.update_yaxes(title_text='Hz', row=2, col=1, gridcolor='rgba(255,255,255,0.06)')
+    fig.update_yaxes(title_text='Hz', row=3, col=1, gridcolor='rgba(255,255,255,0.06)')
+    fig.update_xaxes(title_text='Time (seconds)', row=3, col=1, gridcolor='rgba(255,255,255,0.06)')
     
     return fig

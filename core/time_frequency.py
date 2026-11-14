@@ -20,7 +20,7 @@ from mne.time_frequency import tfr_array_morlet, tfr_array_multitaper
 
 def compute_morlet_tfr(data, sfreq, freqs=None, n_cycles=7.0, 
                        fmin=1.0, fmax=40.0, n_freqs=30,
-                       output='power', decim=1):
+                       output='power', decim=1, tstart=0.0, **kwargs):
     """
     Compute Morlet wavelet time-frequency representation.
     
@@ -41,8 +41,10 @@ def compute_morlet_tfr(data, sfreq, freqs=None, n_cycles=7.0,
         Number of frequency points.
     output : str
         'power' or 'complex'
-    decim : int
-        Decimation factor for time points.
+    decim : int or 'auto'
+        Decimation factor for time points. Use 'auto' for fast responsive visualization.
+    tstart : float
+        Start timestamp in seconds (default 0.0).
         
     Returns
     -------
@@ -53,26 +55,32 @@ def compute_morlet_tfr(data, sfreq, freqs=None, n_cycles=7.0,
     if freqs is None:
         freqs = np.linspace(fmin, fmax, n_freqs)
     
+    if decim == 'auto':
+        # Target ~500-750 points for fast, smooth interactive browser rendering
+        decim_val = max(1, len(data) // 600)
+    else:
+        decim_val = max(1, int(decim))
+    
     # Reshape for MNE: (n_epochs, n_channels, n_times)
     data_3d = data.reshape(1, 1, -1)
     
     # Compute TFR
     tfr = tfr_array_morlet(data_3d, sfreq=sfreq, freqs=freqs,
                            n_cycles=n_cycles, output=output, 
-                           decim=decim, verbose=False)
+                           decim=decim_val, verbose=False)
     
     # tfr shape: (n_epochs, n_channels, n_freqs, n_times)
     power = np.abs(tfr[0, 0]) ** 2 if output == 'complex' else tfr[0, 0]
     
     n_times_out = power.shape[1]
-    times = np.linspace(0, len(data) / sfreq, n_times_out)
+    times = np.linspace(tstart, tstart + len(data) / sfreq, n_times_out)
     
     return power, freqs, times
 
 
 def compute_multitaper_tfr(data, sfreq, freqs=None,
                            fmin=1.0, fmax=40.0, n_freqs=30,
-                           time_bandwidth=4.0, decim=1):
+                           time_bandwidth=4.0, decim=1, tstart=0.0, **kwargs):
     """
     Compute multitaper time-frequency representation.
     
@@ -89,7 +97,8 @@ def compute_multitaper_tfr(data, sfreq, freqs=None,
     time_bandwidth : float
         Time x bandwidth product. Controls frequency smoothing.
         Higher values = more smoothing = lower variance estimates.
-    decim : int
+    decim : int or 'auto'
+    tstart : float
         
     Returns
     -------
@@ -99,6 +108,11 @@ def compute_multitaper_tfr(data, sfreq, freqs=None,
     """
     if freqs is None:
         freqs = np.linspace(fmin, fmax, n_freqs)
+    
+    if decim == 'auto':
+        decim_val = max(1, len(data) // 600)
+    else:
+        decim_val = max(1, int(decim))
     
     data_3d = data.reshape(1, 1, -1)
     
@@ -110,18 +124,18 @@ def compute_multitaper_tfr(data, sfreq, freqs=None,
     tfr = tfr_array_multitaper(data_3d, sfreq=sfreq, freqs=freqs,
                                 n_cycles=n_cycles,
                                 time_bandwidth=time_bandwidth,
-                                output='power', decim=decim,
+                                output='power', decim=decim_val,
                                 verbose=False)
     
     power = tfr[0, 0]  # (n_freqs, n_times)
     n_times_out = power.shape[1]
-    times = np.linspace(0, len(data) / sfreq, n_times_out)
+    times = np.linspace(tstart, tstart + len(data) / sfreq, n_times_out)
     
     return power, freqs, times
 
 
 def compute_stft(data, sfreq, window_length=256, overlap=None,
-                 fmin=0.0, fmax=None, window='hann'):
+                 fmin=0.0, fmax=None, window='hann', tstart=0.0, **kwargs):
     """
     Compute Short-Time Fourier Transform.
     
@@ -140,6 +154,8 @@ def compute_stft(data, sfreq, window_length=256, overlap=None,
         Frequency range to return.
     window : str
         Window function name (e.g., 'hann', 'hamming', 'blackman').
+    tstart : float
+        Start timestamp in seconds.
         
     Returns
     -------
@@ -147,26 +163,37 @@ def compute_stft(data, sfreq, window_length=256, overlap=None,
     freqs : np.ndarray
     times : np.ndarray
     """
+    if len(data) < 2:
+        raise ValueError("Signal too short for STFT analysis.")
+        
+    window_length = max(2, min(int(window_length), len(data)))
+    
     if overlap is None:
         overlap = window_length // 2
+    else:
+        overlap = max(0, min(int(overlap), window_length - 1))
     
     if fmax is None:
         fmax = sfreq / 2
     
-    # Compute STFT using scipy
+    # Compute STFT using scipy with proper PSD scaling
     f, t, Zxx = scipy_signal.stft(data, fs=sfreq, window=window,
                                    nperseg=window_length, 
-                                   noverlap=overlap)
+                                   noverlap=overlap,
+                                   scaling='psd')
     
     # Compute power spectral density
     power = np.abs(Zxx) ** 2
     
     # Apply frequency limits
     freq_mask = (f >= fmin) & (f <= fmax)
+    if not np.any(freq_mask):
+        freq_mask = np.ones(len(f), dtype=bool)
+        
     power = power[freq_mask]
     f = f[freq_mask]
     
-    return power, f, t
+    return power, f, t + tstart
 
 
 def apply_baseline_correction(power, times, baseline=None, mode='mean'):

@@ -107,10 +107,16 @@ def generate_sample_eeg(
     # Build MNE RawArray
     # ------------------------------------------------------------------
     info = mne.create_info(ch_names=ch_names, sfreq=sfreq, ch_types="eeg")
-    try:
-        info.set_montage("standard_1020", on_missing="ignore")
-    except Exception:
-        pass
+    import warnings
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        try:
+            info.set_montage("colin27_1020", on_missing="ignore")
+        except Exception:
+            try:
+                info.set_montage("standard_1020", on_missing="ignore")
+            except Exception:
+                pass
     raw = mne.io.RawArray(data, info, verbose=False)
 
     # Dynamic annotations that fit the requested duration
@@ -240,10 +246,16 @@ def generate_motor_imagery_data(
     # Build MNE RawArray
     # ------------------------------------------------------------------
     info = mne.create_info(ch_names=ch_names, sfreq=sfreq, ch_types="eeg")
-    try:
-        info.set_montage("standard_1020", on_missing="ignore")
-    except Exception:
-        pass
+    import warnings
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        try:
+            info.set_montage("colin27_1020", on_missing="ignore")
+        except Exception:
+            try:
+                info.set_montage("standard_1020", on_missing="ignore")
+            except Exception:
+                pass
     raw = mne.io.RawArray(data, info, verbose=False)
 
     seg_dur = duration / 4.0

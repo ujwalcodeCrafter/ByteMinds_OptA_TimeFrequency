@@ -74,7 +74,7 @@ def _render_experiment_alpha_blocking():
     with st.spinner("Computing time-frequency representation..."):
         if method == "morlet":
             power, freqs, tfr_times = compute_morlet_tfr(
-                data, sfreq=sfreq, fmin=4.0, fmax=30.0, n_freqs=35, n_cycles=7.0
+                data, sfreq=sfreq, fmin=4.0, fmax=30.0, n_freqs=35, n_cycles=7.0, decim='auto'
             )
         else:
             power, freqs, tfr_times = compute_stft(
@@ -186,8 +186,8 @@ def _render_experiment_motor_imagery():
     c3_data = raw.get_data()[raw.ch_names.index('C3')]
     c4_data = raw.get_data()[raw.ch_names.index('C4')]
     
-    p_c3, freqs, t_tfr = compute_morlet_tfr(c3_data, sfreq=sfreq, fmin=5.0, fmax=35.0, n_freqs=35, n_cycles=7.0)
-    p_c4, _, _ = compute_morlet_tfr(c4_data, sfreq=sfreq, fmin=5.0, fmax=35.0, n_freqs=35, n_cycles=7.0)
+    p_c3, freqs, t_tfr = compute_morlet_tfr(c3_data, sfreq=sfreq, fmin=5.0, fmax=35.0, n_freqs=35, n_cycles=7.0, decim='auto')
+    p_c4, _, _ = compute_morlet_tfr(c4_data, sfreq=sfreq, fmin=5.0, fmax=35.0, n_freqs=35, n_cycles=7.0, decim='auto')
     
     if baseline_opt:
         p_c3_disp = apply_baseline_correction(p_c3, t_tfr, baseline=(0.5, 4.5), mode='db')
@@ -274,7 +274,7 @@ def _render_experiment_resolution_tradeoff():
     data = raw.get_data()[raw.ch_names.index('Oz')]
     
     # Compute both
-    p_wavelet, freqs_w, t_w = compute_morlet_tfr(data, sfreq=sfreq, fmin=4.0, fmax=30.0, n_freqs=40, n_cycles=n_cycles_test)
+    p_wavelet, freqs_w, t_w = compute_morlet_tfr(data, sfreq=sfreq, fmin=4.0, fmax=30.0, n_freqs=40, n_cycles=n_cycles_test, decim='auto')
     p_stft, freqs_s, t_s = compute_stft(data, sfreq=sfreq, window_length=win_len_test, overlap=win_len_test//2, fmin=4.0, fmax=30.0)
     
     fig = make_subplots(
