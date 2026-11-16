@@ -1,5 +1,5 @@
 """
-NeuroLab BCI Time-Frequency Analysis - Core Module
+Time-Frequency BCI Analysis - Core Module
 ===================================================
 
 Educational toolkit for EEG time-frequency analysis and BCI demonstrations.

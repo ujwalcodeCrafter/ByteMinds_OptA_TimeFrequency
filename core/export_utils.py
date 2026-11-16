@@ -1,5 +1,5 @@
 """
-Export utilities for NeuroLab.
+Export utilities for Time-Frequency.
 
 Exports analysis parameters as JSON, generates reproducible Python scripts,
 and exports computed data as CSV.
@@ -25,11 +25,11 @@ def export_parameters_json(params):
         JSON-formatted parameter string.
     """
     export_data = {
-        'neurolab_export': {
+        'time_frequency_export': {
             'version': '1.0.0',
             'timestamp': datetime.datetime.now().isoformat(),
             'software': {
-                'application': 'NeuroLab - Interactive EEG Time-Frequency Explorer',
+                'application': 'Time-Frequency - Interactive EEG Explorer',
                 'libraries': {
                     'mne': '>=1.6',
                     'scipy': '>=1.10',
@@ -73,7 +73,7 @@ def generate_python_script(params):
     
     script = f'''#!/usr/bin/env python3
 """
-NeuroLab - Reproducible Time-Frequency Analysis Script
+Time-Frequency - Reproducible Analysis Script
 Generated: {datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
 
 Dataset: {dataset_name}
@@ -97,7 +97,7 @@ N_FREQS = {n_freqs}
 # import mne
 # raw = mne.io.read_raw_edf("your_file.edf", preload=True)
 
-# Option 2: Use NeuroLab sample data
+# Option 2: Use Time-Frequency sample data
 import sys
 sys.path.insert(0, ".")
 from core.sample_data import generate_sample_eeg
@@ -219,10 +219,10 @@ axes[1].set_title('Time-Frequency Representation ({method.capitalize()})')
 plt.colorbar(im, ax=axes[1], label='Power')
 
 plt.tight_layout()
-plt.savefig('neurolab_tfr_result.png', dpi=150, bbox_inches='tight')
+plt.savefig('time_frequency_tfr_result.png', dpi=150, bbox_inches='tight')
 plt.show()
 
-print("Analysis complete! Figure saved as neurolab_tfr_result.png")
+print("Analysis complete! Figure saved as time_frequency_tfr_result.png")
 '''
     return script
 

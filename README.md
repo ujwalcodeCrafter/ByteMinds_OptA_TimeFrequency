@@ -1,181 +1,157 @@
-# NeuroLab — Interactive EEG Time-Frequency Analysis
+# Time-Frequency: Interactive EEG Time-Frequency Analysis
 
-[![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/release/python-3120/)
-[![Streamlit](https://img.shields.io/badge/streamlit-1.45%2B-FF4B4B.svg)](https://streamlit.io/)
-[![MNE-Python](https://img.shields.io/badge/mne--python-1.6%2B-green.svg)](https://mne.tools/)
-[![Tests](https://img.shields.io/badge/pytest-16%20passed-brightgreen.svg)]()
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+This repository contains the code for **Module5: Time-Frequency Analysis**. This was created as part of a project for our university course on Brain-Computer Interface (BCI).
 
-> **"Discover when, where, and how brainwave activity changes."**
-
-**NeuroLab** is an interactive, scientific educational web application designed for university Brain-Computer Interface (BCI) courses. It serves as **Module 5: Time-Frequency Analysis** in the BCI signal-processing pipeline, enabling students and researchers to master how dynamic neural oscillations are decomposed, visualized, and decoded.
+The project uses Python and the Streamlit framework to create an interactive tool to analyze, calculate and visualize how the spectral powers of an EEG signal shift over time using actual signal processing techniques.
 
 ---
 
-## 🎯 Module Role in the BCI Curriculum
+## Why Time-Frequency Analysis?
 
-NeuroLab integrates cleanly into the shared university BCI pipeline:
+In many cases, when using EEG or BCI technology, neural signals are non-stationary – they can vary from one moment to the next based on many factors including movement, stimuli and thoughts.
 
+Using a Fast Fourier Transform (FFT) will allow you to see the frequency spectrum for the entire time window – you will know *what* frequencies are present, but not *when* they were present. On the other hand, simply analyzing the raw EEG data in the time domain will show instantaneous power levels – you will be able to see how oscillations are increasing and decreasing, but you will not know what these oscillations are.
+
+**Time-frequency analysis bridges this gap.** By observing dynamic neural phenomena by placing a signal into both dimensions at the same time. This includes:
+- **Event-Related Desynchronization (ERD):** A specific decrease in rhythmic power (suppression of mu and beta rhythms over motor cortex when imagining movement)
+- **Event-Related Synchronization (ERS):** A sudden increase or remnant of rhythmic power
+- **Rhythmic Gating / Alpha Blocking:** Blocking of occipital alpha waves (8-12Hz) when eyes are open and subsequent return when eyes are closed
+
+---
+
+## Role in the BCI Curriculum
+
+Within the standard 9-module BCI processing pipeline, this tool acts as the bridge between raw signal conditioning and downstream machine learning:
+
+```text
+[1. Data Loading] -> [2. Filtering] -> [3. Artifact Handling] -> [4. Epoching & ERP]
+                                      |
+                                      v
+                        [5. TIME-FREQUENCY ANALYSIS]  <-- (This Module)
+                                      |
+                                      v
+[6. Spatial Analysis] -> [7. Feature Extraction] -> [8. Classification] -> [9. Paradigm Explorer]
 ```
-[1. Data Loading] ➔ [2. Filtering] ➔ [3. Artifact Handling] ➔ [4. Epoching & ERP]
-                                      │
-                                      ▼
-                        [5. TIME-FREQUENCY ANALYSIS (NeuroLab)]
-                                      │
-                                      ▼
-[6. Spatial Analysis] ➔ [7. Feature Extraction] ➔ [8. Classification] ➔ [9. Paradigm Explorer]
-```
+
+It takes continuous or epoched EEG signals from earlier preprocessing steps and computes the spectral energy distribution that gets passed to spatial filters (like CSP) or feature classifiers.
 
 ---
 
-## 🚀 Key Features
+## What the Application Does
 
-### 1. Ready-to-Use Datasets & Flexible Uploads
-- **Built-in Benchmark 1 (Alpha Blocking):** 10-channel 30s synthetic EEG with realistic 1/f pink noise, occipital alpha (10 Hz), and event annotations (`eyes_closed` ➔ `eyes_open` ➔ `eyes_closed`).
-- **Built-in Benchmark 2 (Motor Imagery):** 6-channel 20s sensorimotor rhythm simulation with contralateral mu (11 Hz) and beta (22 Hz) Event-Related Desynchronization (ERD) at C3/C4.
-- **Universal EEG File Upload:** Reads **EDF (`.edf`)**, **FIF (`.fif`)**, **BrainVision (`.vhdr`)**, **EEGLAB (`.set`)**, and customizable **CSV (`.csv`)** files.
+- **Multiple Decomposition Methods:**
+  - **Morlet Wavelets:** Use `tfr_array_morlet` from MNE with adjustable wavelet cycles to control the time-vs-frequency resolution trade-off.
+  - **Multitaper Analysis:** Use `tfr_array_multitaper` from MNE with adjustable time-bandwidth product to obtain smooth estimates of the spectrum with low variance.
+  - **Short-Time Fourier Transform (STFT):** Use `scipy.signal.stft` from SciPy to perform a windowed Fourier transform with customizable window shape (Hamming, Hann, Blackman), length, and overlap.
+  - **Side-by-Side Method Comparison:** Plot a comparison view to apply STFT, Morlet, and Multitaper on the same signal portion and visualize how the three methods’ spectrograms compare.
 
-### 2. Authentic Mathematical Time-Frequency Engine
-No fake mockups or static plots. All representations are calculated live via established scientific algorithms:
-- **Morlet Wavelet Transform:** Continuous wavelet transform using MNE's `tfr_array_morlet` with user-selectable cycle count ($n_{cycles}$) and frequency-adaptive resolution.
-- **Multitaper Method:** DPSS orthogonal eigenspectra using MNE's `tfr_array_multitaper` with time-bandwidth product ($NW$) smoothing.
-- **Short-Time Fourier Transform (STFT):** SciPy's `scipy.signal.stft` with adjustable window length, overlap, and tapering windows (Hann, Hamming, Blackman).
-- **Baseline Normalization Modes:** None, Additive Mean, Ratio, Log-ratio, Percent Change, Z-score, and Decibels ($10 \log_{10}(P/P_{base})$).
+- **Baseline Normalization Modes:**
+  - Essential for isolating event-related effects from background pink noise ($1/f$). Supports standard baseline modes: Mean subtraction, Ratio, Log-ratio, Decibels ($10 \log_{10}(P/P_{base})$), Percent Change, and Z-score.
 
-### 3. Synchronized, Linked Dual Visualizations
-- **Plot 1 (Top):** Interactive raw EEG potential trace (in $\mu\text{V}$) with event markers, channel label, and ROI time window highlight.
-- **Plot 2 (Bottom):** Time-Frequency Spectrogram with calibrated power colorbar and frequency range.
-- **Synchronized Linking:** Time-window selection updates and aligns both plots simultaneously with crosshair inspection.
-- **Bonus Plot:** Real-time physiological frequency band power trajectories (Delta, Theta, Alpha, Beta, Gamma).
+- **Data Sources Supported:**
+  - **Built-in Benchmark 1 (Alpha Blocking):** 10-channel 30-second synthetic recording with 1/f noise, visual alpha oscillations at Oz/O1/O2, and alternating eyes-closed / eyes-open intervals.
+  - **Built-in Benchmark 2 (Motor Imagery):** 6-channel 20-second sensorimotor rhythm simulation showing contralateral mu (11 Hz) and beta (22 Hz) desynchronization at C3 and C4 during left- and right-hand motor imagery.
+  - **File Uploads:** Reads `.edf`, `.fif`, `.vhdr` (BrainVision), `.set` (EEGLAB), and `.csv` files.
 
-### 4. Guided Experiment Lab
-- **Experiment 1 (Occipital Alpha Blocking):** Visual sensory gating over primary visual cortex (Oz).
-- **Experiment 2 (Motor Imagery ERD/ERS):** Contralateral sensorimotor rhythm desynchronization during left vs. right hand imagery.
-- **Experiment 3 (Heisenberg-Gabor Trade-off):** Empirical demonstration of the fundamental time vs. frequency resolution bound.
+- **Synchronized Visualizations:**
+  - Top waveform plot with raw voltage, marked with events and region of interest indicators. Below is a time-frequency spectrogram that updates when the user pans or zooms on the time axis.
+  - Frequency band power trajectory: Delta (1-4Hz), Theta (4-8Hz), Alpha (8-13Hz), Beta (13-30Hz), Gamma (30-40Hz) over time.
 
-### 5. Interactive Explain Panel & Parameter Playground
-- Comprehensive explanations for 15 foundational BCI questions.
-- Dynamic diagnostic feedback on active parameters.
-- Interactive **Parameter Playground** explaining the physical consequences of turning knobs.
-
-### 6. Knowledge Check Quiz
-- 10-question multiple-choice interactive quiz with scoring, scientific explanations, and reset capability.
-
-### 7. Export Functionality
-- **JSON Configuration:** Complete metadata for analysis reproduction.
-- **Reproducible Python Script (`.py`):** Standalone executable script generated with exact student-selected parameters.
-- **Power Matrix (`.csv`):** Full numerical frequency $\times$ time energy matrix.
+- **Educational Tools & Export:**
+  - Concept explainers: core signal processing theory discussed, interactive parameter playground explaining the trade-offs of adjusting each knob.
+  - Knowledge check quiz to assess understanding with immediate feedback.
+  - Ability to export the following for analysis: a configuration file (JSON), a script to reproduce the analysis (Python), and a calculated power matrix (CSV).
 
 ---
 
-## 💻 Technology Stack
+## Project Structure
 
-- **Application & UI:** Python 3.12+, Streamlit 1.45+
-- **EEG & Signal Processing:** MNE-Python 1.6+, SciPy 1.10+, NumPy 1.24+, Pandas 2.0+
-- **Interactive Visualizations:** Plotly Graph Objects & Plotly Express
-- **Automated Verification:** Pytest test harness
-
----
-
-## 📦 Project Directory Structure
-
-```
-BCI_Time_Frequency_Project/
+```text
+BCI_3/
 ├── app.py                      # Main Streamlit application
-├── requirements.txt            # Dependency specifications
+├── requirements.txt            # Python package dependencies
+├── .env.example                # Example configuration
 ├── .gitignore                  # Git ignore rules
-├── .env.example                # Environment variables template
-├── README.md                   # Project overview and instructions
+├── README.md                   # This document
 │
-├── core/                       # Scientific processing engine (UI-independent)
-│   ├── __init__.py             # Core package interface
-│   ├── data_loader.py          # Multi-format EEG parser (EDF, FIF, VHDR, SET, CSV)
-│   ├── sample_data.py          # Synthetic benchmarks (Alpha blocking, Motor imagery)
-│   ├── preprocessing.py       # Signal cropping, channel slicing, filtering
-│   ├── time_frequency.py       # Morlet, Multitaper, STFT, and baseline correction
-│   ├── band_power.py           # Clinical EEG band power computation
-│   ├── validation.py           # Parameter bounds & Nyquist constraints
-│   └── export_utils.py         # JSON, CSV, and Python code generation
+├── core/                       # Core signal processing functions (no Streamlit dependency)
+│   ├── __init__.py
+│   ├── data_loader.py          # EEG file loaders (.edf, .fif, .vhdr, .set, .csv)
+│   ├── sample_data.py          # Synthetic benchmarks for alpha blocking & motor imagery
+│   ├── preprocessing.py       # Slicing, channel selection, filtering
+│   ├── time_frequency.py       # Morlet, Multitaper, STFT, and baseline algorithms
+│   ├── band_power.py           # Band power trajectory calculations
+│   ├── validation.py           # Parameter checking & Nyquist limit enforcement
+│   └── export_utils.py         # JSON metadata, CSV export, and Python script generation
 │
-├── components/                 # Streamlit UI modules
+├── components/                 # Streamlit UI layouts and interactive widgets
 │   ├── __init__.py
 │   ├── sidebar.py              # Navigation and parameter controls
-│   ├── visualizations.py       # Linked Plotly figures & band power plots
-│   ├── controls.py             # Data source selector & metadata cards
-│   ├── explain_panel.py        # Educational explanations & Parameter Playground
-│   ├── experiment_lab.py       # Three guided student experiments
-│   └── quiz.py                 # Interactive 10-question quiz
+│   ├── visualizations.py       # Linked Plotly graphs & band trajectories
+│   ├── controls.py             # Data source selector & channel metadata displays
+│   ├── explain_panel.py        # Theory questions & parameter playground
+│   └── quiz.py                 # Self-assessment multiple-choice quiz
 │
-├── tests/                      # Automated pytest suite (16 tests)
-│   ├── test_data_loading.py    # Dimensions, sfreq, annotations, CSV tests
-│   ├── test_time_frequency.py  # Morlet, Multitaper, STFT, baselines, band power
-│   └── test_validation.py      # Nyquist limits, cycles, window constraints
+├── tests/                      # Automated test suite
+│   ├── test_data_loading.py    # Tests for loaders, synthetic data, and metadata
+│   ├── test_time_frequency.py  # Tests for Morlet, Multitaper, STFT, baselines, band power
+│   └── test_validation.py      # Tests for parameter clamps and input validation
 │
 └── docs/                       # Project documentation
-    ├── USER_GUIDE.md           # Student walkthrough & operation guide
-    ├── DEVELOPER_GUIDE.md      # Architecture & BCI integration guide
-    ├── SCIENTIFIC_BACKGROUND.md# Mathematical formulations & neurophysiology
-    ├── DEMO_SCRIPT.md          # 10-minute presentation & viva script
-    └── CONTRIBUTION_TEMPLATE.md# Individual student contribution form
+    ├── USER_GUIDE.md           # Student walkthrough for running and using the app
+    ├── DEVELOPER_GUIDE.md      # Code architecture and BCI pipeline integration guide
+    └── CONTRIBUTION_TEMPLATE.md# Group contribution statement form
 ```
 
 ---
 
-## ⚡ Quickstart: One-Line Run Command
+## Setup and Installation
 
-### 1. Clone & Navigate
+### 1. Prerequisites
+- Python 3.12 (Python 3.10+ also works)
+- `pip` package manager
+
+### 2. Clone the Repository
 ```bash
 git clone <repository-url>
-cd BCI_Time_Frequency_Project
+cd BCI_3
 ```
 
-### 2. Install Dependencies
+### 3. Create a Virtual Environment (Recommended)
+```bash
+python -m venv venv
+
+# On Windows:
+venv\Scripts\activate
+
+# On macOS/Linux:
+source venv/bin/activate
+```
+
+### 4. Install Dependencies
 ```bash
 pip install -r requirements.txt
 ```
 
-### 3. Launch Application (One-Line Command)
+### 5. Run the Application
 ```bash
 streamlit run app.py
 ```
-The application opens automatically in your web browser at `http://localhost:8501`.
+Streamlit will start a local server and open `http://localhost:8501` in your default browser.
 
 ---
 
-## 🧪 Running the Automated Test Suite
+## Running the Automated Tests
 
-NeuroLab includes an automated test suite verifying data loaders, signal processing pipelines, baseline corrections, and parameter validations:
+The test suite covers data loading, sample generation, each time-frequency algorithm, baseline corrections, and parameter validations.
+
+Run the tests using `python -m pytest` from the project root:
 
 ```bash
-pytest tests/ -v
+python -m pytest tests/ -v
 ```
 
-Expected output:
-```text
-tests/test_data_loading.py::test_generate_sample_eeg_structure PASSED        [  6%]
-tests/test_data_loading.py::test_sample_data_metadata_and_annotations PASSED [ 12%]
-tests/test_data_loading.py::test_motor_imagery_dataset_generation PASSED     [ 18%]
-tests/test_data_loading.py::test_extract_data_info PASSED                    [ 25%]
-tests/test_data_loading.py::test_csv_data_loader PASSED                      [ 31%]
-tests/test_time_frequency.py::test_morlet_wavelet_computation PASSED         [ 37%]
-tests/test_time_frequency.py::test_multitaper_computation PASSED             [ 43%]
-tests/test_time_frequency.py::test_stft_computation PASSED                   [ 50%]
-tests/test_time_frequency.py::test_baseline_correction_modes PASSED          [ 56%]
-tests/test_time_frequency.py::test_compute_band_power PASSED                 [ 62%]
-tests/test_validation.py::test_frequency_range_validation PASSED             [ 68%]
-tests/test_validation.py::test_wavelet_cycles_validation PASSED              [ 75%]
-tests/test_validation.py::test_stft_params_validation PASSED                 [ 81%]
-tests/test_validation.py::test_time_range_validation PASSED                  [ 87%]
-tests/test_validation.py::test_channel_validation PASSED                     [ 93%]
-tests/test_validation.py::test_sanitize_parameters PASSED                    [100%]
-
-======================= 16 passed in 2.54s =======================
-```
-
----
-
-## ⚠️ Limitations & Academic Disclaimer
-
-- **Educational Purpose:** NeuroLab is built specifically for academic teaching and university laboratory courses. It is **not** a certified medical diagnostic device and must not be used for clinical diagnoses or patient care.
-- **Privacy & Security:** All computation is executed strictly on the local machine; no neural telemetry is uploaded to third-party cloud services.
-- **Synthetic Data Disclaimer:** Synthetic datasets are explicitly labeled in the UI to maintain rigorous scientific distinction between simulated benchmarks and clinical human recordings.
+All 16 tests should run headless and pass:
+- `tests/test_data_loading.py`: 5 tests
+- `tests/test_time_frequency.py`: 5 tests
+- `tests/test_validation.py`: 6 tests

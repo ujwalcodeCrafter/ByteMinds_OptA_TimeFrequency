@@ -1,5 +1,5 @@
 """
-Time-Frequency Analysis Engine for NeuroLab.
+Time-Frequency Analysis Engine.
 
 Implements three methods:
 1. Morlet Wavelet Transform (via MNE)

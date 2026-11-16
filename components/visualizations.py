@@ -1,5 +1,5 @@
 """
-NeuroLab Interactive Visualizations.
+Time-Frequency Interactive Visualizations.
 
 Creates linked EEG signal and time-frequency spectrogram plots using Plotly.
 """

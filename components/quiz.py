@@ -1,5 +1,5 @@
 """
-NeuroLab Knowledge Check - Interactive Educational Quiz.
+Time-Frequency Knowledge Check - Interactive Educational Quiz.
 
 Interactive 10+ question multiple-choice quiz covering EEG time-frequency
 analysis, mathematical trade-offs, and BCI applications.
@@ -135,7 +135,7 @@ def render_quiz():
     """Render the interactive quiz module."""
     st.markdown("""
     <div style="background: linear-gradient(135deg, #0d1b2a, #1b263b); padding: 1.5rem; border-radius: 12px; border: 1px solid #00BCD4; margin-bottom: 1.5rem;">
-        <h2 style="color: #00BCD4; margin: 0;">✅ Knowledge Check: Time-Frequency Mastery</h2>
+        <h2 style="color: #00BCD4; margin: 0;">Knowledge Check: Time-Frequency Mastery</h2>
         <p style="color: #90CAF9; margin-top: 0.5rem; margin-bottom: 0;">
             Test your scientific understanding of EEG time-frequency principles, Morlet wavelets, 
             STFT trade-offs, ERD/ERS dynamics, and BCI paradigms.
@@ -151,7 +151,7 @@ def render_quiz():
         
     col1, col2 = st.columns([3, 1])
     with col2:
-        if st.button("🔄 Restart Quiz", use_container_width=True):
+        if st.button("Restart Quiz", use_container_width=True):
             st.session_state.quiz_answers = {}
             st.session_state.quiz_submitted = False
             st.rerun()
@@ -184,9 +184,9 @@ def render_quiz():
             user_answer = st.session_state.quiz_answers.get(q_id, None)
             
             if user_answer == correct_answer:
-                st.success(f"✅ **Correct!** {q['explanation']}")
+                st.success(f"**Correct!** {q['explanation']}")
             else:
-                st.error(f"❌ **Incorrect.** Correct answer: **{correct_answer}**\n\n*Why:* {q['explanation']}")
+                st.error(f"**Incorrect.** Correct answer: **{correct_answer}**\n\n*Why:* {q['explanation']}")
                 
         st.markdown("<hr style='border-color: rgba(255,255,255,0.08); margin: 1rem 0;'>", unsafe_allow_html=True)
         
@@ -194,7 +194,7 @@ def render_quiz():
     if not st.session_state.quiz_submitted:
         answered_count = len(st.session_state.quiz_answers)
         st.info(f"Answered: {answered_count} / {total_questions} questions")
-        if st.button("📝 Submit Answers for Grading", type="primary", use_container_width=True):
+        if st.button("Submit Answers for Grading", type="primary", use_container_width=True):
             st.session_state.quiz_submitted = True
             st.rerun()
     else:
@@ -205,7 +205,7 @@ def render_quiz():
         )
         percentage = (score / total_questions) * 100
         
-        st.markdown("### 🏆 Final Quiz Result")
+        st.markdown("### Final Quiz Result")
         score_color = "#4CAF50" if percentage >= 80 else ("#FF9800" if percentage >= 50 else "#F44336")
         
         st.markdown(f"""

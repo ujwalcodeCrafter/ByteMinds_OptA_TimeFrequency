@@ -1,5 +1,5 @@
 """
-NeuroLab Sidebar Navigation and Controls.
+Time-Frequency Sidebar Navigation and Controls.
 """
 import streamlit as st
 
@@ -10,7 +10,7 @@ def render_sidebar():
         # Branding
         st.markdown("""
         <div style="text-align: center; padding: 1rem 0;">
-            <h1 style="color: #00BCD4; margin-bottom: 0; font-size: 1.8rem;">🧠 NEUROLAB</h1>
+            <h1 style="color: #00BCD4; margin-bottom: 0; font-size: 1.8rem;">TIME-FREQUENCY</h1>
             <p style="color: #90CAF9; font-size: 0.85rem; margin-top: 0.2rem;">
                 Interactive EEG Time-Frequency Explorer
             </p>
@@ -21,14 +21,13 @@ def render_sidebar():
         # Navigation
         page = st.radio(
             "Navigation",
-            ["🏠 Overview", 
-             "📊 EEG Data", 
-             "🔬 Time-Frequency Explorer",
-             "📚 Learn the Concepts",
-             "🧪 Experiment Lab",
-             "✅ Knowledge Check", 
-             "💾 Export Results",
-             "ℹ️ About"],
+            ["Overview",
+             "EEG Data",
+             "Time-Frequency Explorer",
+             "Learn the Concepts",
+             "Knowledge Check",
+             "Export Results",
+             "About"],
             label_visibility="collapsed"
         )
         
@@ -38,7 +37,7 @@ def render_sidebar():
         st.markdown("""
         <div style="padding: 0.5rem; background: rgba(0,188,212,0.05); border-radius: 8px; border-left: 3px solid #00BCD4;">
             <p style="font-size: 0.75rem; color: #B0BEC5; margin: 0;">
-                🎓 BCI Course Module<br>
+                BCI Course Module<br>
                 Time-Frequency Analysis
             </p>
         </div>
@@ -50,7 +49,7 @@ def render_sidebar():
 def render_analysis_controls(raw_data):
     """Render the analysis parameter controls in sidebar with safety clamps and presets."""
     with st.sidebar:
-        st.markdown("### ⚙️ Analysis Parameters")
+        st.markdown("### Analysis Parameters")
         
         # Channel selection
         default_ch_idx = raw_data.ch_names.index('Oz') if 'Oz' in raw_data.ch_names else 0

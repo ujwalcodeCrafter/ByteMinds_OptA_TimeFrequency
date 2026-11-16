@@ -1,5 +1,5 @@
 """
-NeuroLab UI Controls and Data Source Management.
+Time-Frequency UI Controls and Data Source Management.
 """
 import streamlit as st
 import os
@@ -7,13 +7,13 @@ import tempfile
 
 def render_data_source_selector():
     """Render data source selection UI. Returns source type and any upload."""
-    st.markdown("### 📁 Select Data Source")
+    st.markdown("### Select Data Source")
     
     source = st.radio(
         "Choose how to load EEG data:",
-        ["🧪 Sample Dataset (Alpha Blocking)", 
-         "🧪 Sample Dataset (Motor Imagery)",
-         "📤 Upload Your Own EEG File"],
+        ["Sample Dataset (Alpha Blocking)",
+         "Sample Dataset (Motor Imagery)",
+         "Upload Your Own EEG File"],
         help="Start with a sample dataset to explore, or upload your own EEG recording"
     )
     
@@ -48,7 +48,7 @@ def render_data_source_selector():
                 csv_params['time_col'] = None
         
         if uploaded_file and uploaded_file.name.endswith('.vhdr'):
-            st.warning("⚠️ BrainVision format requires .vhdr, .vmrk, and .eeg files to be in the same directory. Upload the .vhdr file - the others should be accessible at the same path.")
+            st.warning("BrainVision format requires .vhdr, .vmrk, and .eeg files to be in the same directory. Upload the .vhdr file - the others should be accessible at the same path.")
     
     source_type = 'alpha_blocking' if 'Alpha' in source else ('motor_imagery' if 'Motor' in source else 'upload')
     return source_type, uploaded_file, csv_params
@@ -57,7 +57,7 @@ def render_data_source_selector():
 def render_dataset_info(info_dict, dataset_name="", is_synthetic=False):
     """Display dataset metadata in a clean card layout."""
     if is_synthetic:
-        st.info("ℹ️ **This is a simulated dataset** generated for educational purposes. It contains synthesized EEG signals with known frequency components for demonstration.")
+        st.info("**This is a simulated dataset** generated for educational purposes. It contains synthesized EEG signals with known frequency components for demonstration.")
     
     col1, col2, col3, col4 = st.columns(4)
     with col1:
@@ -69,7 +69,7 @@ def render_dataset_info(info_dict, dataset_name="", is_synthetic=False):
     with col4:
         st.metric("Duration", f"{info_dict['duration']:.1f} s")
     
-    with st.expander("📋 Channel Details"):
+    with st.expander("Channel Details"):
         st.write(f"**Channel Names:** {', '.join(info_dict['ch_names'])}")
         if info_dict.get('annotations'):
             st.markdown("**Events/Annotations:**")

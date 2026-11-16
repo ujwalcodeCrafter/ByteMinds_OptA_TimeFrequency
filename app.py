@@ -1,5 +1,5 @@
 """
-NeuroLab: Interactive EEG Time-Frequency Analysis Web Application
+Time-Frequency: Interactive EEG Time-Frequency Analysis Web Application
 ==================================================================
 
 A comprehensive educational platform for Brain-Computer Interface (BCI) students
@@ -36,15 +36,13 @@ from components.visualizations import (
 from components.controls import render_data_source_selector, render_dataset_info
 from components.explain_panel import render_explain_panel
 from components.quiz import render_quiz
-from components.experiment_lab import render_experiment_lab
 
 
 # -----------------------------------------------------------------------------
 # Page Configuration & Styling
 # -----------------------------------------------------------------------------
 st.set_page_config(
-    page_title="NeuroLab — EEG Time-Frequency Explorer",
-    page_icon="🧠",
+    page_title="Time-Frequency — EEG Time-Frequency Explorer",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -131,7 +129,7 @@ st.markdown("""
 # -----------------------------------------------------------------------------
 if "raw_data" not in st.session_state:
     # Initialize with default alpha blocking sample data
-    with st.spinner("Initializing NeuroLab sample EEG data..."):
+    with st.spinner("Initializing Time-Frequency sample EEG data..."):
         st.session_state.raw_data = generate_sample_eeg(duration=30.0, sfreq=256.0)
         st.session_state.raw_info = extract_data_info(st.session_state.raw_data)
         st.session_state.dataset_name = "Alpha Blocking Paradigm (Simulated)"
@@ -185,10 +183,10 @@ if "Overview" in selected_page:
         <div style="display: flex; justify-content: space-between; align-items: flex-start;">
             <div>
                 <span style="background: rgba(0, 188, 212, 0.2); color: #00BCD4; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; text-transform: uppercase;">
-                    🎓 BCI Curriculum • Module 5 of 9
+                    BCI Curriculum • Module 5 of 9
                 </span>
                 <h1 style="color: #ECEFF1; font-size: 2.6rem; margin: 0.8rem 0 0.3rem 0; font-weight: 700;">
-                    NEUROLAB
+                    TIME-FREQUENCY
                 </h1>
                 <h3 style="color: #00BCD4; font-size: 1.3rem; margin: 0; font-weight: 400;">
                     Interactive EEG Time-Frequency Analysis
@@ -200,18 +198,15 @@ if "Overview" in selected_page:
                     and decode cognitive states with authentic signal-processing algorithms.
                 </p>
             </div>
-            <div style="text-align: right; display: none; @media (min-width: 768px) { display: block; }">
-                <span style="font-size: 4rem;">🧠⚡</span>
-            </div>
         </div>
     </div>
     """, unsafe_allow_html=True)
     
-    col_nav1, col_nav2, col_nav3 = st.columns(3)
+    col_nav1, col_nav2 = st.columns(2)
     with col_nav1:
         st.markdown("""
         <div class="metric-card">
-            <h4 style="color: #00BCD4; margin-top: 0;">🔬 Time-Frequency Explorer</h4>
+            <h4 style="color: #00BCD4; margin-top: 0;">Time-Frequency Explorer</h4>
             <p style="color: #90A4AE; font-size: 0.9rem;">
                 Run real Morlet Wavelet, Multitaper, and STFT computations with two linked live-updating plots.
             </p>
@@ -220,23 +215,14 @@ if "Overview" in selected_page:
     with col_nav2:
         st.markdown("""
         <div class="metric-card">
-            <h4 style="color: #00BCD4; margin-top: 0;">🧪 Experiment Lab</h4>
-            <p style="color: #90A4AE; font-size: 0.9rem;">
-                Guided experiments on Occipital Alpha Blocking, Motor Imagery ERD/ERS, and Resolution Trade-offs.
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
-    with col_nav3:
-        st.markdown("""
-        <div class="metric-card">
-            <h4 style="color: #00BCD4; margin-top: 0;">✅ Knowledge Check</h4>
+            <h4 style="color: #00BCD4; margin-top: 0;">Knowledge Check</h4>
             <p style="color: #90A4AE; font-size: 0.9rem;">
                 Reinforce your understanding with 10 interactive multiple-choice questions with scientific feedback.
             </p>
         </div>
         """, unsafe_allow_html=True)
 
-    st.markdown("### 🌈 Physiological EEG Frequency Bands Reference")
+    st.markdown("### Physiological EEG Frequency Bands Reference")
     st.markdown("Scalp EEG decomposes into distinct canonical frequency bands reflecting underlying thalamocortical networks:")
     
     cols = st.columns(5)
@@ -258,7 +244,7 @@ if "Overview" in selected_page:
     st.markdown("---")
     
     st.markdown("""
-    ### 🎯 Why Time-Frequency Analysis Matters in BCI
+    ### Why Time-Frequency Analysis Matters in BCI
     In Brain-Computer Interfaces, user intent is encoded not by static amplitudes, but by **rhythmic neural synchrony**:
     1. **Motor Imagery (Sensorimotor Rhythms):** Imagining limb movement evokes immediate *Event-Related Desynchronization (ERD)* in contralateral mu (8–13 Hz) and beta (13–30 Hz) bands over motor cortex (C3/C4).
     2. **Event-Related Potentials (ERP):** P300 target detection triggers coordinated theta-band phase resetting and burst synchronization.
@@ -273,7 +259,7 @@ if "Overview" in selected_page:
 elif "EEG Data" in selected_page:
     st.markdown("""
     <div style="background: linear-gradient(135deg, #0d1b2a, #1b263b); padding: 1.5rem; border-radius: 12px; border: 1px solid #00BCD4; margin-bottom: 1.5rem;">
-        <h2 style="color: #00BCD4; margin: 0;">📊 EEG Data Management</h2>
+        <h2 style="color: #00BCD4; margin: 0;">EEG Data Management</h2>
         <p style="color: #90CAF9; margin-top: 0.5rem; margin-bottom: 0;">
             Load ready-to-use sample datasets or upload your own experimental EEG recordings (.edf, .fif, .vhdr, .set, .csv).
         </p>
@@ -316,7 +302,7 @@ elif "EEG Data" in selected_page:
     # Display dataset metadata card
     render_dataset_info(st.session_state.raw_info, st.session_state.dataset_name, st.session_state.is_synthetic)
     
-    st.markdown("### 📈 Raw EEG Signal Inspector")
+    st.markdown("### Raw EEG Signal Inspector")
     col1, col2 = st.columns([1, 3])
     with col1:
         preview_ch = st.selectbox("Select Channel to Preview:", st.session_state.raw_data.ch_names)
@@ -340,14 +326,14 @@ elif "Time-Frequency Explorer" in selected_page:
     <div style="background: linear-gradient(135deg, #0d1b2a, #1b263b); padding: 1.25rem 1.5rem; border-radius: 12px; border: 1px solid rgba(0, 188, 212, 0.4); margin-bottom: 1.2rem; box-shadow: 0 4px 20px rgba(0,0,0,0.35);">
         <div style="display: flex; justify-content: space-between; align-items: center;">
             <div>
-                <h2 style="color: #00BCD4; margin: 0; font-size: 1.8rem;">🔬 Time-Frequency Explorer</h2>
+                <h2 style="color: #00BCD4; margin: 0; font-size: 1.8rem;">Time-Frequency Explorer</h2>
                 <p style="color: #90CAF9; margin-top: 0.3rem; margin-bottom: 0; font-size: 0.95rem;">
                     Live multi-taper, continuous Morlet wavelet, and STFT decomposition with synchronized linked visualizations.
                 </p>
             </div>
             <div>
                 <span style="background: rgba(0, 188, 212, 0.15); border: 1px solid #00BCD4; color: #4DD0E1; padding: 5px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600;">
-                    ⚡ 60 FPS Accelerated
+                    60 FPS Accelerated
                 </span>
             </div>
         </div>
@@ -361,7 +347,7 @@ elif "Time-Frequency Explorer" in selected_page:
     clean_params, val_errors = sanitize_parameters(params)
     if val_errors:
         for err in val_errors:
-            st.error(f"⚠️ Validation error: {err}")
+            st.error(f"Validation error: {err}")
         st.stop()
         
     st.session_state.last_params = clean_params
@@ -427,7 +413,7 @@ elif "Time-Frequency Explorer" in selected_page:
             power_display = power
             
         # Store in session state for exports
-        st.session_state.computed_tfr = {
+        st.session_state.cached_tfr = {
             'power': power_display,
             'raw_power': power,
             'freqs': freqs,
@@ -490,8 +476,8 @@ elif "Time-Frequency Explorer" in selected_page:
 
     # --- TWO TABS: SINGLE METHOD DEEP-DIVE & SIDE-BY-SIDE 3-METHOD COMPARISON ---
     view_tab1, view_tab2 = st.tabs([
-        f"🔍 Active Method ({method.capitalize()})",
-        "⚖️ Side-by-Side: Compare Morlet vs. Multitaper vs. STFT"
+        f"Active Method ({method.capitalize()})",
+        "Side-by-Side: Compare Morlet vs. Multitaper vs. STFT"
     ])
     
     with view_tab1:
@@ -512,7 +498,7 @@ elif "Time-Frequency Explorer" in selected_page:
         st.plotly_chart(linked_fig, use_container_width=True)
         
         # --- BONUS: Band Power Evolution Plot ---
-        with st.expander("📈 Frequency Band Power Trajectories Over Time", expanded=True):
+        with st.expander("Frequency Band Power Trajectories Over Time", expanded=True):
             st.markdown("Temporal evolution of power aggregated across standard EEG clinical bands:")
             band_powers = compute_all_band_powers(power, freqs)
             if band_powers:
@@ -524,7 +510,7 @@ elif "Time-Frequency Explorer" in selected_page:
         # Educational notes for current spectrogram
         st.markdown(f"""
         <div style="background: rgba(19, 27, 46, 0.7); border-left: 4px solid #00BCD4; padding: 0.9rem 1.2rem; border-radius: 6px; margin-top: 1rem;">
-            <h5 style="color: #00BCD4; margin: 0 0 0.4rem 0;">💡 Live Interpretation Guide for Channel {ch_name}</h5>
+            <h5 style="color: #00BCD4; margin: 0 0 0.4rem 0;">Live Interpretation Guide for Channel {ch_name}</h5>
             <div style="color: #B0BEC5; font-size: 0.88rem; line-height: 1.5;">
                 • <b>Top Plot (Potential):</b> Shows instantaneous scalp voltage fluctuations in microvolts (µV). Drag or double-click to pan and zoom; the bottom spectrogram responds in lockstep.<br>
                 • <b>Bottom Plot (Energy Surface):</b> Shows spectral energy across frequency and time. Warmer tones (red/yellow) indicate synchronized oscillatory bursting; cooler tones (blue) indicate desynchronization (ERD) or baseline levels.<br>
@@ -534,7 +520,7 @@ elif "Time-Frequency Explorer" in selected_page:
         """, unsafe_allow_html=True)
 
     with view_tab2:
-        st.markdown("#### ⚖️ Head-to-Head Comparison: All 3 Algorithms on Channel " + ch_name)
+        st.markdown("#### Head-to-Head Comparison: All 3 Algorithms on Channel " + ch_name)
         st.caption("Inspect the exact same EEG signal analyzed simultaneously by Continuous Morlet Wavelets, Multitaper with DPSS Tapers, and Short-Time Fourier Transform (STFT).")
         
         # Compute all 3 methods live
@@ -565,7 +551,7 @@ elif "Time-Frequency Explorer" in selected_page:
         
         st.markdown("""
         <div style="background: rgba(19, 27, 46, 0.85); border: 1px solid rgba(0,188,212,0.3); border-radius: 8px; padding: 1.2rem; margin-top: 1rem;">
-            <h4 style="color: #00BCD4; margin: 0 0 0.8rem 0;">🔬 Why do all three detect the same rhythm, yet look different?</h4>
+            <h4 style="color: #00BCD4; margin: 0 0 0.8rem 0;">Why do all three detect the same rhythm, yet look different?</h4>
             <div style="color: #ECEFF1; font-size: 0.9rem; line-height: 1.6;">
                 1. <b>Why they identify the same frequency:</b> All three algorithms are scientifically correct, so all three correctly detect the genuine <b>10 Hz alpha oscillation</b> and its blocking at second 10! If any method failed to show the 10 Hz band, it would be mathematically wrong.<br>
                 2. <b>The distinct visual signatures:</b>
@@ -590,8 +576,7 @@ elif "Learn the Concepts" in selected_page:
 # -----------------------------------------------------------------------------
 # PAGE 5: EXPERIMENT LAB
 # -----------------------------------------------------------------------------
-elif "Experiment Lab" in selected_page:
-    render_experiment_lab()
+
 
 
 # -----------------------------------------------------------------------------
@@ -607,7 +592,7 @@ elif "Knowledge Check" in selected_page:
 elif "Export Results" in selected_page:
     st.markdown("""
     <div style="background: linear-gradient(135deg, #0d1b2a, #1b263b); padding: 1.5rem; border-radius: 12px; border: 1px solid #00BCD4; margin-bottom: 1.5rem;">
-        <h2 style="color: #00BCD4; margin: 0;">💾 Export Results & Reproducible Code</h2>
+        <h2 style="color: #00BCD4; margin: 0;">Export Results & Reproducible Code</h2>
         <p style="color: #90CAF9; margin-top: 0.5rem; margin-bottom: 0;">
             Download your active parameter configuration, numerical spectral matrices,
             and standalone Python scripts for reproducible BCI research.
@@ -616,7 +601,7 @@ elif "Export Results" in selected_page:
     """, unsafe_allow_html=True)
     
     if st.session_state.cached_tfr is None:
-        st.warning("⚠️ No time-frequency computation found in session cache. Visit the **Time-Frequency Explorer** tab first to run an analysis.")
+        st.warning("No time-frequency computation found in session cache. Visit the **Time-Frequency Explorer** tab first to run an analysis.")
     else:
         cached = st.session_state.cached_tfr
         params = cached['params']
@@ -628,28 +613,28 @@ elif "Export Results" in selected_page:
         
         # 1. JSON Parameters Export
         with col1:
-            st.markdown("### 📋 Configuration Metadata (JSON)")
+            st.markdown("### Configuration Metadata (JSON)")
             json_str = export_parameters_json(params)
             st.json(json.loads(json_str))
             
             st.download_button(
-                label="⬇️ Download Parameters (.json)",
+                label="Download Parameters (.json)",
                 data=json_str,
-                file_name=f"neurolab_config_{params['method']}_{datetime.date.today()}.json",
+                file_name=f"time_frequency_config_{params['method']}_{datetime.date.today()}.json",
                 mime="application/json",
                 use_container_width=True
             )
             
         # 2. Python Code Export
         with col2:
-            st.markdown("### 🐍 Reproducible Python Script (.py)")
+            st.markdown("### Reproducible Python Script (.py)")
             py_code = generate_python_script(params)
             st.code(py_code, language="python")
             
             st.download_button(
-                label="⬇️ Download Executable Python Script (.py)",
+                label="Download Executable Python Script (.py)",
                 data=py_code,
-                file_name=f"run_neurolab_{params['method']}.py",
+                file_name=f"run_time_frequency_{params['method']}.py",
                 mime="text/x-python",
                 use_container_width=True
             )
@@ -657,14 +642,14 @@ elif "Export Results" in selected_page:
         st.markdown("---")
         
         # 3. CSV Matrix Export
-        st.markdown("### 📊 Spectral Power Matrix (CSV)")
+        st.markdown("### Spectral Power Matrix (CSV)")
         st.markdown(f"Matrix shape: **{power.shape[0]} frequency bins × {power.shape[1]} temporal time points**")
         
         csv_data = export_power_matrix_csv(power, freqs, times)
         st.download_button(
-            label="⬇️ Download Computed Power Matrix (.csv)",
+            label="Download Computed Power Matrix (.csv)",
             data=csv_data,
-            file_name=f"neurolab_power_matrix_{params['channel']}_{params['method']}.csv",
+            file_name=f"time_frequency_power_matrix_{params['channel']}_{params['method']}.csv",
             mime="text/csv",
             use_container_width=True
         )
@@ -676,7 +661,7 @@ elif "Export Results" in selected_page:
 elif "About" in selected_page:
     st.markdown("""
     <div style="background: linear-gradient(135deg, #0d1b2a, #1b263b); padding: 1.5rem; border-radius: 12px; border: 1px solid #00BCD4; margin-bottom: 1.5rem;">
-        <h2 style="color: #00BCD4; margin: 0;">ℹ️ About NeuroLab</h2>
+        <h2 style="color: #00BCD4; margin: 0;">About Time-Frequency</h2>
         <p style="color: #90CAF9; margin-top: 0.5rem; margin-bottom: 0;">
             University Brain-Computer Interface Course Project — Module 5: Time-Frequency Analysis.
         </p>
@@ -684,18 +669,18 @@ elif "About" in selected_page:
     """, unsafe_allow_html=True)
     
     st.markdown("""
-    ### 🏛️ Academic Context & Module Role
+    ### Academic Context & Module Role
     This interactive educational application forms **Module 5 (Time-Frequency Analysis)** in the shared curriculum pipeline:
     
-    `1. Data Loading` → `2. Filtering` → `3. Artifact Handling` → `4. Epoching & ERP` → **`5. TIME-FREQUENCY ANALYSIS (NeuroLab)`** → `6. Spatial Analysis` → `7. Feature Extraction` → `8. Classification` → `9. Paradigm Explorer`
+    `1. Data Loading` → `2. Filtering` → `3. Artifact Handling` → `4. Epoching & ERP` → **`5. TIME-FREQUENCY ANALYSIS (Time-Frequency)`** → `6. Spatial Analysis` → `7. Feature Extraction` → `8. Classification` → `9. Paradigm Explorer`
     
-    ### 🛠️ Technology Stack
+    ### Technology Stack
     - **UI & Web Application:** Streamlit, Custom Dark Neuroscience CSS
     - **Signal Processing & BCI:** MNE-Python (v1.6+), SciPy (v1.10+), NumPy (v1.24+), Pandas
     - **Interactive Visualizations:** Plotly Graph Objects & Plotly Subplots
     - **Quality Assurance & Verification:** Pytest automated testing suite
     
-    ### 📜 Scientific Integrity & Limitations
+    ### Scientific Integrity & Limitations
     - **Educational Purpose:** Designed strictly for academic teaching and research demonstration. Not intended for clinical diagnostic, surgical, or therapeutic use.
     - **Data Privacy:** All processing executes locally on the student's workstation. No neural data is transmitted to remote servers.
     - **Attribution:** Synthetic benchmarks model physiological ground truth from Hans Berger (1929) and Pfurtscheller & Lopes da Silva (1999).

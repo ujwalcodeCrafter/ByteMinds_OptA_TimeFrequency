@@ -1,120 +1,161 @@
-# NeuroLab — Student User Guide
+# Time-Frequency Analysis — Student User Guide
 
-Welcome to the **NeuroLab User Guide**! This document provides step-by-step instructions for using the NeuroLab application in your Brain-Computer Interface (BCI) course assignments and laboratory sessions.
+This guide will explain how to use the Time-Frequency Analysis interactive application in labs and assignments for the BCI course.
+
+## **Why are we doing Time-Frequency Analysis**
+
+Simply analyzing EEG data in Brain-Computer Interfaces in the time domain only gives you half the story. Depending on the task, the brain creates specific neural oscillations:
+- Close your eyes and see strong 8-12Hz alpha waves in the occipital area.
+- Open your eyes and notice how the oscillation decreases (alpha blocking).
+
+Imagine moving your right hand and notice how betas and mus become weak in the opposite motor cortex (near electrode C3 on the left hemisphere)
+
+A Fourier Transform would indicate that this data contained beta or alpha waves somewhere in the data. However, it would not indicate:
+- When this occurred
+- How long it lasted
+- How it evolved following a stimulus
+
+With this application, you can view both domains simultaneously by loading EEG data, performing actual mathematical decompositions (STFT, Multitaper, Wavelets), adjusting how to balance time and frequency resolution, and examining the resulting time-frequency plots.
 
 ---
+## Navigation Overview
 
-## 🧭 Navigation Overview
+Using the navigation on the sidebar you can navigate to:
 
-NeuroLab features a responsive navigation sidebar with 8 primary sections:
+1. **Overview** - A summary of Module 5 within the overall BCI course. Also includes a cheat sheet for common EEG frequencies (Delta, Theta, Alpha, Beta, Gamma).
 
-1. **🏠 Overview:** System mission, BCI curriculum context, and canonical frequency band cards.
-2. **📊 EEG Data:** Dataset management, built-in benchmarks, file uploader, and channel inspector.
-3. **🔬 Time-Frequency Explorer:** Main laboratory with interactive controls and two linked plots.
-4. **📚 Learn the Concepts:** 15 modular theory topics and the interactive Parameter Playground.
-5. **🧪 Experiment Lab:** Guided student experiments (Alpha Blocking, Motor Imagery ERD/ERS, Resolution Trade-off).
-6. **✅ Knowledge Check:** 10-question multiple-choice interactive quiz.
-7. **💾 Export Results:** Download parameters as JSON, executable Python scripts, and CSV power matrices.
-8. **ℹ️ About:** Academic background, grading rubrics, technology stack, and licensing.
+2. **EEG Data** - Choose from pre-loaded datasets or choose to import your own EEG data.
 
+3. **Time-Frequency Explorer** - Primary area to explore the data. Includes graphs of waveforms and spectrograms (linked), a graph showing how band power changes, and the ability to compare using 3 different methods side-by-side using sliders to adjust the parameters.
+
+4. **Learn the Concepts** - Includes answers to 15 common question about signal processing. Also includes a Parameter Playground.
+
+5. **Knowledge Check** - A quiz with 10 questions (multiple choice) to assess your knowledge before submitting your lab report.
+
+6. **Export Results** - Export current analysis parameters as JSON, create a Python code file to re-create your graphs elsewhere, or export the spectral power matrix as CSV.
+
+7. **About** - Information regarding the project, how this relates to the overall course, and sources.
 ---
 
-## 🛠️ Step-by-Step Student Workflow
+## Step-by-Step Lab Walkthrough
 
-### Step 1: Launch NeuroLab
-Open your terminal, navigate to the repository directory, and run:
+### Step 1: Launch the Application
+
+First, ensure you are using the correct virtual environment. In your terminal, navigate to the project folder and launch Streamlit:
+
 ```bash
 streamlit run app.py
 ```
-Your default browser will open the application at `http://localhost:8501`.
+
+Your browser should automatically open at `http://localhost:8501`. If it does not, please copy and paste this into Firefox or Chrome.
 
 ---
 
 ### Step 2: Choose or Upload EEG Data
-Navigate to **📊 EEG Data** in the sidebar. You have three choices:
 
-#### Option A: Sample Dataset — Alpha Blocking (Default)
-- **What it is:** A 10-channel, 30-second synthetic recording simulating occipital alpha rhythm dynamics.
-- **Key Channels:** `Oz`, `O1`, `O2` (occipital electrodes).
-- **Phases:** 
-  - 0–10s: Eyes Closed (strong 10 Hz alpha oscillation)
-  - 10–20s: Eyes Open (alpha blocking / desynchronization)
-  - 20–30s: Eyes Closed (recovery of alpha rhythm)
+In the sidebar, click on **EEGData**. Here you can either select from two pre-made synthetic data sets or upload your own data.
 
-#### Option B: Sample Dataset — Motor Imagery
-- **What it is:** A 6-channel, 20-second recording simulating sensorimotor rhythms (electrodes `C3`, `Cz`, `C4`).
-- **Phases:**
-  - 0–5s: Baseline rest
-  - 5–10s: Left-hand imagery (contralateral right-hemisphere ERD at C4)
-  - 10–15s: Rest recovery
-  - 15–20s: Right-hand imagery (contralateral left-hemisphere ERD at C3)
+Option A: Alpha Blocking Benchmark (Default)
 
-#### Option C: Upload Your Own EEG File
-- Drag and drop or browse for an EEG file. Supported formats:
-  - **`.edf`** (European Data Format — standard clinical format)
-  - **`.fif`** (Neuromag / MNE raw format)
-  - **`.vhdr`** (BrainVision header — ensure associated `.vmrk` and `.eeg` files are in the same folder)
-  - **`.set`** (EEGLAB dataset)
-  - **`.csv`** (Tabular format: set sampling rate, select time column and channel columns)
+- **Signal:** A 30-second sample at 256Hz using 10 channels with realistic 1/f pink noise.
+- **What to look for:** Focus on electrode `Oz`. Between 0-10 seconds (eyes closed), you should see a strong 10Hz rhythm. Between 10-20 seconds (eyes open), this rhythm should break down. Between 20-30 seconds (eyes closed), the rhythm should return.
+- **Best electrodes to examine:* `Oz`, `O1`, `O2`
 
+Option B: Motor Imagination Benchmark
+
+- **Signal:** A 20-second sample at 256Hz using 6 channels (`F3`, `F4`, `C3`, `Cz`, `C4`, `Pz`).
+
+- **What to look for:**
+
+- When imagining using your left hand (between 5-10 seconds), observe electrode `C4` (opposite side, right motor cortex) to see a reduction in both beta (22Hz) and a dip in mu (11Hz) power.
+
+- When imagining using your right hand (between 15-20 seconds), observe electrode `C3` (opposite side, left motor cortex) to see the same reduction.
+
+- **Best electrodes to examine:** `C3` vs `C4`
+
+Option C: Upload an External EEG File
+
+- If you were provided with your own EEG file by your instructor, select “UploadFile”
+- Accepted file formats include:
+  - `.edf` (European Data Format)
+  - `.fif` (native format for MNE-Python)
+  - `.vhdr` (BrainVision header file - keep your `.vmrk` and `.eeg` files in the same folder)
+  - `.set` (EEGLAB format)
+  - `.csv` (tabular format - you will need to specify the sampling rate and choose which column contains your voltage and time data
 ---
 
 ### Step 3: Run Time-Frequency Decomposition
-Switch to **🔬 Time-Frequency Explorer** in the sidebar.
 
-#### 1. Select Electrode Site
-Choose the scalp electrode from the **EEG Channel** dropdown (e.g. `Oz` for visual alpha or `C3`/`C4` for motor rhythms).
+From the sidebar, navigate to the **Time-Frequency Explorer** page.
 
-#### 2. Choose Analysis Algorithm
-Select from three established mathematical methods:
-- **Morlet Wavelet Transform:**
-  - *Setting to adjust:* **Number of Cycles ($n_{cycles}$)**.
-  - *Tip:* Use 3–5 cycles for fast temporal transient detection; use 10–14 cycles for sharp frequency separation. Default is 7.0 cycles.
-- **Multitaper Method:**
-  - *Setting to adjust:* **Time-Bandwidth Product ($NW$)**.
-  - *Tip:* Higher values (e.g. 4.0–6.0) average more orthogonal DPSS tapers, reducing variance.
-- **Short-Time Fourier Transform (STFT):**
-  - *Settings to adjust:* **Window Length (samples)**, **Overlap**, and **Window Function** (Hann, Hamming, Blackman).
-  - *Tip:* Longer windows sharpen frequency bins; shorter windows sharpen temporal resolution.
+#### 1. Choose your Channel and Time Window
 
-#### 3. Set Frequency Limits
-- Choose **Min Freq** (e.g. 1.0 Hz) and **Max Freq** (e.g. 40.0 Hz). Frequencies are validated against the Nyquist bound ($f_{max} \le f_s / 2$).
-- Choose **Frequency Points** (slider between 10 and 100) to control vertical spectrogram granularity.
+- Using the **SignalandChannel** dropdown in the sidebar, select the desired electrode (use `Oz` for alpha related tasks and `C3`/`C4` for motor imagery tasks).
+- If you only want to analyze a section of the data, use the **TimeWindow** slider.
 
-#### 4. Configure Baseline Correction
-- Choose a baseline mode: `None`, `mean`, `ratio`, `db`, `percent`, or `zscore`.
-- For Event-Related Desynchronization (ERD) studies, select **`db`** and set the baseline interval to a pre-stimulus resting period (e.g. 0.0s to 5.0s).
+#### 2. Choose your Method
 
----
+Select which type of time-frequency analysis you would like to perform:
 
-### Step 4: Interact with the Linked Plots
-The visualization automatically recalculates when you alter any parameter:
-- **Plot 1 (Top Waveform):** Shows instantaneous amplitude in microvolts ($\mu\text{V}$) with event markers. The dashed box highlights your selected time range of interest.
-- **Plot 2 (Bottom Spectrogram):** Displays spectral power across time and frequency.
-- **Crosshair Inspection:** Hover your cursor anywhere on the spectrogram to view exact values: `Time (s)`, `Frequency (Hz)`, and `Power`.
-- **Linked Zooming:** Use the Plotly box-zoom or pan tools. Both plots share a synchronized horizontal time axis.
-- **Band Power Trajectories:** Expand the bottom accordion to inspect individual power envelopes for Delta, Theta, Alpha, Beta, and Gamma.
+- **Morlet Wavelets:** Multiply your data by a Gaussian-windowed complex sine wave.
 
----
+- **Key control:** Wavelet Cycles (`n_cycles`).
 
-### Step 5: Conduct Guided Experiments
-Visit **🧪 Experiment Lab** to test your knowledge with three structured neuroscience experiments:
-1. **Occipital Alpha Blocking:** Observe how opening the eyes shuts down the 10 Hz rhythm.
-2. **Motor Imagery ERD/ERS:** Compare C3 vs. C4 during left vs. right hand imagination.
-3. **Resolution Trade-off:** Side-by-side comparison of Morlet wavelets and STFT on identical signals.
+- Using fewer cycles (around 3-5) will create narrower wavelets that provide more precise time-based information but spread out frequencies. Using more cycles (around 8-12) will create wider wavelets with more precise frequency information but may become blurry when determining when a signal begins or ends.
 
----
+- Using 7 cycles is recommended as a default.
 
-### Step 6: Test Your Understanding
-Navigate to **✅ Knowledge Check** and take the 10-question multiple-choice quiz.
-- Select your answers and click **Submit Answers for Grading**.
-- Review explanations for both correct and incorrect choices.
-- Retake the quiz at any time using **Restart Quiz**.
+- **Multitaper Method:** This method utilizes many orthogonal discrete prolate spheroidal sequences (DPSS) as tapers.
+
+- **Key control:** Time-Bandwidth Product (`NW`). 
+
+- Using a high value will average over more orthogonal tapers, significantly lowering variance and random noise (though this may slightly blur frequencies).
+
+- **Short-Time Fourier Transform (STFT):** Place a fixed window over the data and calculate a discrete Fourier transform for each window.
+
+- **Key controls:** Window Function (Blackman, Hamming, Hann), Overlap, and Window Length. 
+
+- Using a short window will allow for the detection of quick time changes, while using a longer window will allow for the separation of nearby frequencies.
+
+####  3.Frequency Limits and Grid Granularity
+
+
+- Input **MinFrequency** (e.g.,1.0Hzor4.0Hz)and **MaxFrequency** (e.g.,30.0Hzor40.0Hz). The tool will ensure that `f_max` does not surpass the Nyquist rate `f_s/2`).
+- Use the **FrequencyPoints** slider to select how many vertical frequency bins will be analyzed.
+  
+#### 4.BaselineCorrection(CrucialforERD/ERS)
+  
+  Since EEG generally follows a 1/f power law, raw spectral power is often dominated by low frequencies. To reveal frequency changes related to a task:
+  
+- Select **BaselineMode** as either `db` (Decibels: `10log₁₀(P/P_base)`*) or* `percent`.
+- Define the **BaselineInterval** as a pre-stimulus or resting period (e.g., 0.0s to 4.0s).
+- On the resulting spectrogram, negative values indicate ERD (desynchronization) and positive values indicate ERS (synchronization).
 
 ---
+  ### Step4: InterpretingtheVisualizations
+####   TheSynchronizedLinkedPlots
+- **TopPlot(VoltageTrace)**: Shows the raw EEG signal in microvolts (μV). A bounding box highlights the time period being analyzed, while vertical lines indicate experimentally-defined events.
+- **BottomPlot(Spectrogram)**: Visualizes power across both frequency and time.
+- **HoverInspection**: When you hover over any point on either plot, you can see the precise frequency, time, and baseline-corrected power.
+- **SynchronizedZoom**: Using either plot’s Plotly zoom or pan tools will synchronize the two plots since they both use the same time axis to keep events aligned.
 
-### Step 7: Export Code & Deliverables
-Go to **💾 Export Results**:
-- Click **Download Parameters (.json)** to save your exact configuration metadata.
-- Click **Download Executable Python Script (.py)** to download a complete, standalone script that reproduces your exact figures using MNE and Matplotlib outside Streamlit.
-- Click **Download Computed Power Matrix (.csv)** to export the numerical energy surface for MATLAB, R, or Python data science workflows.
+####   MethodComparisonTab
+  
+  Below the main plot, you can switch between:
+- **SingleMethodView**: A detailed spectrogram with numerous settings you can adjust.
+- **MethodComparisonView**: Calculates and visualizes both STFT, Multitaper, and Morlet on the same plot side-by-side to compare how different wavelet/Window cycle settings affect data resolution.
+####   BandPowerTrajectories
+  To see how different frequency bands (Delta, Theta, Alpha, Beta, Gamma) change over time, expand the **Clinical Frequency Band Trajectories**
+  
+---
+###   Step5: ConceptCheckandQuiz
+- **Learn the Concepts**: Click the accordion to view the theory questions. Using the interactive **ParameterPlayground**, you can adjust various sliders and see a plain-language explanation of how different settings affect time or frequency resolution.
+- **KnowledgeCheck**: Complete a 10-question multiple choice test. After submitting your answers, you will instantly get scored and receive detailed scientific feedback telling you why each response is right or wrong.
+
+---
+###   Step6: ExportingDeliverablesforYourLabReport
+  Once you have identified suitable parameters that effectively isolate the desired neural oscillation, go to **ExportResults**:
+  
+  1.**Parameters(.json):** This exports all selected method, window, and filter settings in a well-formatted JSON document that you can include as an appendix to your report.\
+  2.**StandalonePythonScript(.py):** This will download a runnable `.py` file that uses NumPy and MNE to regenerate your plots offline without using the Streamlit application.\
+  3.**PowerMatrix(.csv):** This exports a 2D numerical power matrix (each row represents a time point, while each column represents a frequency). You can use this data in Excel, MATLAB, or Python to perform statistical analysis.

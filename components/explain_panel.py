@@ -1,5 +1,5 @@
 """
-NeuroLab Educational Content - Explain Panel.
+Time-Frequency Educational Content - Explain Panel.
 
 Comprehensive explanations of time-frequency analysis concepts for BCI students,
 including fundamental principles, mathematical intuition, and an interactive Parameter Playground.
@@ -18,7 +18,7 @@ def render_explain_panel(current_params=None):
     """
     st.markdown("""
     <div style="background: linear-gradient(135deg, #0d1b2a, #1b263b); padding: 1.5rem; border-radius: 12px; border: 1px solid #00BCD4; margin-bottom: 1.5rem;">
-        <h2 style="color: #00BCD4; margin: 0;">📚 Understand the Science</h2>
+        <h2 style="color: #00BCD4; margin: 0;">Understand the Science</h2>
         <p style="color: #90CAF9; margin-top: 0.5rem; margin-bottom: 0;">
             Master the core concepts of EEG Time-Frequency Analysis in Brain-Computer Interfaces.
             Explore theoretical foundations, method comparisons, and intuitive parameter effects.
@@ -31,9 +31,9 @@ def render_explain_panel(current_params=None):
         _render_contextual_parameter_insight(current_params)
     
     tab1, tab2, tab3 = st.tabs([
-        "🧠 EEG & TFA Fundamentals", 
-        "🔬 Time-Frequency Methods", 
-        "⚙️ Parameter Playground & Resolution"
+        "EEG & TFA Fundamentals",
+        "Time-Frequency Methods",
+        "Parameter Playground & Resolution"
     ])
     
     with tab1:
@@ -57,27 +57,27 @@ def _render_contextual_parameter_insight(params):
     if method == 'morlet':
         n_cycles = params.get('n_cycles', 7.0)
         if n_cycles <= 4.0:
-            insights.append("⚡ **Low Morlet Cycles (≤ 4):** Prioritizing precise timing of transients at the cost of broader frequency smearing.")
+            insights.append("**Low Morlet Cycles (≤ 4):** Prioritizing precise timing of transients at the cost of broader frequency smearing.")
         elif n_cycles >= 12.0:
-            insights.append("🎯 **High Morlet Cycles (≥ 12):** Sharply tuned frequency bands, but transient events will be smoothed out over time.")
+            insights.append("**High Morlet Cycles (≥ 12):** Sharply tuned frequency bands, but transient events will be smoothed out over time.")
         else:
-            insights.append(f"⚖️ **Balanced Cycles ({n_cycles}):** Standard compromise between temporal and frequency resolution across alpha/beta bands.")
+            insights.append(f"**Balanced Cycles ({n_cycles}):** Standard compromise between temporal and frequency resolution across alpha/beta bands.")
     elif method == 'stft':
         wlen = params.get('window_length', 256)
         dt_win = wlen / sfreq
         df_bin = sfreq / wlen
-        insights.append(f"⏱️ **STFT Window:** {wlen} samples = {dt_win:.2f}s temporal window width, yielding {df_bin:.2f} Hz frequency bin spacing.")
+        insights.append(f"**STFT Window:** {wlen} samples = {dt_win:.2f}s temporal window width, yielding {df_bin:.2f} Hz frequency bin spacing.")
     elif method == 'multitaper':
         tbw = params.get('time_bandwidth', 4.0)
         n_tapers = max(1, int(2 * tbw - 1))
-        insights.append(f"🛡️ **Multitaper Smoothing:** Time-Bandwidth Product = {tbw} uses ~{n_tapers} orthogonal DPSS tapers to suppress variance.")
+        insights.append(f"**Multitaper Smoothing:** Time-Bandwidth Product = {tbw} uses ~{n_tapers} orthogonal DPSS tapers to suppress variance.")
         
     if baseline_mode:
-        insights.append(f"📐 **Baseline Correction Active ({baseline_mode}):** Visualizing task-induced event-related perturbations relative to reference power.")
+        insights.append(f"**Baseline Correction Active ({baseline_mode}):** Visualizing task-induced event-related perturbations relative to reference power.")
     else:
-        insights.append("🔍 **Raw Power Displayed:** 1/f spectral slope dominates; lower frequencies naturally carry higher raw amplitudes.")
+        insights.append("**Raw Power Displayed:** 1/f spectral slope dominates; lower frequencies naturally carry higher raw amplitudes.")
         
-    with st.expander("💡 Live Parameter Diagnostics & Insights", expanded=True):
+    with st.expander("Live Parameter Diagnostics & Insights", expanded=True):
         st.markdown(f"**Current Configuration:** `{method.upper()}` | Freq: `{fmin}–{fmax} Hz` | Channel: `{params.get('channel', 'N/A')}`")
         for item in insights:
             st.markdown(f"- {item}")
@@ -208,7 +208,7 @@ def _render_method_explanations():
 
 def _render_parameter_playground(current_params):
     st.markdown("""
-    ### 🎮 Parameter Playground: Cause & Effect
+    ### Parameter Playground: Cause & Effect
     Understand how turning knobs in signal processing alters your scientific representation.
     """)
     
@@ -247,5 +247,5 @@ Raw EEG power naturally decays following a power-law distribution ($P(f) \\propt
     }
     
     for title, desc in questions.items():
-        with st.expander(f"🔬 {title}"):
+        with st.expander(title):
             st.markdown(desc)

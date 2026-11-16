@@ -1,138 +1,193 @@
-# NeuroLab — Developer & Integration Guide
+# Time-Frequency Analysis — Developer & Integration Guide
 
-This guide is intended for developers, researchers, and instructors extending NeuroLab or integrating it into a shared BCI educational platform alongside other modules (Filtering, Epoching, Spatial Analysis, Classification).
+Intended audience: This guide is for developers, instructors, and team members who would like to contribute to or include this code within the other modules used in the BCI course pipeline (Classification, SpatialAnalysis, Epoching, Filtering, etc.)
 
 ---
 
-## 🏛️ Architecture & Design Philosophy
+## Architecture and Design Principles
 
-NeuroLab is architected under strict **separation of concerns**:
-- **`core/`:** Pure, framework-agnostic scientific signal processing. Every function takes and returns standard NumPy arrays, MNE objects, or primitive Python types. It has **no dependencies on Streamlit**. This allows `core/` functions to be imported into command-line pipelines, batch scripts, Jupyter notebooks, or other GUI frameworks.
-- **`components/`:** Streamlit-specific presentation components (Plotly charts, sidebars, educational panels, quiz modules).
-- **`app.py`:** Orchestrator that binds user inputs to core processing functions and renders UI components.
+The codebase is organized around a strict separation between computational signal processing and the user interface:
 
-```
-       User Interface (Streamlit)
-               │
-        components/ (Plotly, UI cards)
-               │
-          app.py (Orchestrator)
-               │
-  ┌────────────┴────────────┐
-  ▼                         ▼
-core/time_frequency.py    core/data_loader.py
-core/sample_data.py       core/preprocessing.py
-core/band_power.py        core/validation.py
+- **`core/` (Scientific Signal Processing):** Generic Python functions that return and take in Python types, MNE data structures, or NumPy arrays. Because there are no Streamlit imports in `core/`, this code can be used in a Jupyter notebook, a command line, or any other offline processing (without starting the web server).
+- **`components/` (Presentation & Widgets):** Cards, forms, Plotly graph generators, and other Streamlit UI elements.
+- **`app.py` (Application Orchestrator):** Routes between pages, manages session state, invokes  `core/` functions based on user input, and sends data to `components/` for display.
+
+
+```text
+       Streamlit Frontend (Browser)
+                    │
+            components/ (Plotly, UI)
+                    │
+               app.py (State & Routing)
+                    │
+    ┌───────────────┴───────────────┐
+    ▼                               ▼
+core/time_frequency.py          core/data_loader.py
+core/sample_data.py             core/preprocessing.py
+core/band_power.py              core/validation.py
 core/export_utils.py
 ```
 
 ---
 
-## 📁 Core Module Interface Reference
+## Core Module API Reference
 
-### 1. `core.time_frequency`
+### 1. Time-Frequency Engine (`core/time_frequency.py`)
+
+This module performs the actual mathematical transformations:
+
 - `compute_morlet_tfr(data, sfreq, freqs=None, n_cycles=7.0, fmin=1.0, fmax=40.0, n_freqs=30, output='power', decim=1)`:
-  - Uses `mne.time_frequency.tfr_array_morlet`. Reshapes 1D data to `(1, 1, n_times)` for MNE, extracts `[0, 0]`.
-  - Returns `(power, freqs, times)`.
+  - Wraps MNE's `mne.time_frequency.tfr_array_morlet`.
+  - Reshapes 1D channel data into `(1, 1, n_times)`, computes the complex Morlet wavelets, extracts power as the squared magnitude, and returns `(power, freqs, times)`.
+  - The `decim` parameter enables temporal downsampling when processing long recordings to preserve rendering speed.
+
 - `compute_multitaper_tfr(data, sfreq, freqs=None, fmin=1.0, fmax=40.0, n_freqs=30, time_bandwidth=4.0, decim=1)`:
-  - Uses `mne.time_frequency.tfr_array_multitaper` with adaptive cycles (`n_cycles = freqs / 2.0`).
+  - Wraps `mne.time_frequency.tfr_array_multitaper` using DPSS (Discrete Prolate Spheroidal Sequences) tapers.
+  - Frequency cycles adaptively scale as `n_cycles = freqs / 2.0`.
   - Returns `(power, freqs, times)`.
+
 - `compute_stft(data, sfreq, window_length=256, overlap=None, fmin=0.0, fmax=None, window='hann')`:
-  - Uses `scipy.signal.stft`. Power is computed as $|Z_{xx}|^2$.
+  - Uses `scipy.signal.stft` to calculate windowed Fourier power.
+  - Computes power as $|Z_{xx}|^2$.
   - Returns `(power, freqs, times)`.
+
 - `apply_baseline_correction(power, times, baseline=None, mode='mean')`:
-  - Modes: `'mean'`, `'ratio'`, `'logratio'`, `'percent'`, `'zscore'`, `'db'`.
-  - Includes division-by-zero protection via `np.finfo(float).eps`.
+  - Normalizes a 2D power array against a baseline time window $[t_{start}, t_{end}]$.
+  - Supported modes: `'mean'` (additive), `'ratio'`, `'logratio'`, `'percent'`, `'zscore'`, and `'db'` ($10 \log_{10}(P / P_{base})$).
+  - Includes a floating-point epsilon safeguard (`np.finfo(float).eps`) to prevent division by zero or log of zero.
+
 - `compute_tfr(data, sfreq, method='morlet', **kwargs)`:
-  - Unified dispatcher.
-
-### 2. `core.data_loader`
-- `load_eeg_file(file_path_or_buffer, file_type=None, **kwargs)`:
-  - Supports `.edf`, `.fif`, `.vhdr`, `.set`, `.csv`.
-  - Returns `(raw: mne.io.Raw, info_dict: dict)`.
-- `extract_data_info(raw)`:
-  - Returns metadata dictionary: `n_channels`, `ch_names`, `sfreq`, `n_samples`, `duration`, `annotations`, `ch_types`.
-
-### 3. `core.sample_data`
-- `generate_sample_eeg(duration=30.0, sfreq=256.0, random_seed=42)`:
-  - Generates 10-channel benchmark with alpha oscillation, 1/f noise, and alpha blocking event markers.
-- `generate_motor_imagery_data(duration=20.0, sfreq=256.0, random_seed=123)`:
-  - Generates 6-channel benchmark with sensorimotor mu/beta ERD/ERS at C3/C4.
-
-### 4. `core.validation`
-- `validate_frequency_range(fmin, fmax, sfreq)`
-- `validate_wavelet_cycles(n_cycles, freqs)`
-- `validate_stft_params(window_length, overlap, n_samples)`
-- `validate_time_range(tmin, tmax, total_duration)`
-- `validate_baseline(baseline, tmin, tmax)`
-- `validate_channel(channel, available_channels)`
-- `sanitize_parameters(params_dict)`
+  - Unified dispatcher function that routes requests to `compute_morlet_tfr`, `compute_multitaper_tfr`, or `compute_stft` based on the `method` argument.
 
 ---
 
-## 🔌 How to Integrate into the Unified BCI Platform
+### 2. Data Loading & Parsers (`core/data_loader.py`)
 
-To incorporate NeuroLab into a multi-group monolithic Streamlit application:
+- `load_eeg_file(file_path_or_buffer, file_type=None, **kwargs)`:
+  - Detects and loads `.edf`, `.fif`, `.vhdr`, `.set`, or `.csv` files into an `mne.io.Raw` object.
+  - Returns a tuple of `(raw_instance, metadata_dict)`.
+- `extract_data_info(raw)`:
+  - Extracts key recording metadata: channel count, channel names, sampling rate ($s_{freq}$), sample count, duration in seconds, event annotations, and channel types.
+
+---
+
+### 3. Benchmark Generators (`core/sample_data.py`)
+
+- `generate_sample_eeg(duration=30.0, sfreq=256.0, random_seed=42)`:
+  - Produces a 10-channel synthetic EEG recording with realistic $1/f$ pink noise and simulated occipital alpha waves (10 Hz).
+  - Includes event annotations for `eyes_closed` (0–10s), `eyes_open` (10–20s), and `eyes_closed` (20–30s).
+- `generate_motor_imagery_data(duration=20.0, sfreq=256.0, random_seed=123)`:
+  - Produces a 6-channel sensorimotor benchmark with contralateral mu (11 Hz) and beta (22 Hz) Event-Related Desynchronization (ERD) at electrodes `C3` and `C4`.
+
+---
+
+### 4. Input Validation & Safety Clamps (`core/validation.py`)
+
+All user inputs from the UI pass through validation routines before reaching numerical processing:
+- `validate_frequency_range(fmin, fmax, sfreq)`: Ensures $0 < f_{min} < f_{max} \le f_s / 2$ (Nyquist boundary).
+- `validate_wavelet_cycles(n_cycles, freqs)`: Enforces positive cycle limits and ensures wavelets fit within the data buffer.
+- `validate_stft_params(window_length, overlap, n_samples)`: Ensures window length does not exceed sample length and that overlap is strictly less than window length.
+- `validate_time_range(tmin, tmax, total_duration)`: Verifies timestamps remain within file bounds.
+- `sanitize_parameters(params_dict)`: Cleans and provides safe defaults for all incoming UI controls.
+
+---
+
+### 5. Export Utilities (`core/export_utils.py`)
+
+- `export_parameters_json(params)`: Serializes analysis metadata and parameter settings to formatted JSON.
+- `generate_python_script(params)`: Generates a self-contained, standalone Python script that re-runs the exact analysis using MNE and Matplotlib offline.
+- `export_power_matrix_csv(power, freqs, times)`: Dumps the 2D energy matrix into a tabular CSV format (rows = frequencies, columns = timestamps) with numerical headers.
+
+---
+
+## Integrating with Other BCI Pipeline Modules
+
+If your project is part of a larger course platform combining all BCI stages, here is how Module 5 interfaces with upstream and downstream components:
 
 ```python
-# In main_bci_platform.py
-import streamlit as st
+# Integration example: Connecting Module 4 (Epoching/ERP) -> Module 5 -> Module 6 (CSP)
+import numpy as np
 from core.time_frequency import compute_tfr, apply_baseline_correction
-from components.visualizations import create_linked_plots
 
-def render_module_5_time_frequency(preprocessed_raw):
+def process_bci_time_frequency(epoched_data, sfreq, target_channel="C3"):
     """
-    Module 5 Entrypoint: Accepts preprocessed MNE Raw object from Module 4 (Epoching & ERP)
-    and passes computed spectral features to Module 6 (Spatial Analysis / CSP).
+    Accepts epoched data from Module 4, computes time-frequency spectral power,
+    and returns feature vectors for Module 6 (Spatial Analysis) or Module 8 (Classifier).
+    
+    Parameters:
+        epoched_data: 2D numpy array of shape (n_channels, n_times)
+        sfreq: Sampling rate in Hz
+        target_channel: Name of channel to analyze
+        
+    Returns:
+        dict containing power matrix, frequency bins, and time coordinates.
     """
-    st.subheader("Module 5: Time-Frequency Analysis")
+    # 1. Compute Morlet wavelet time-frequency decomposition
+    power, freqs, times = compute_tfr(
+        data=epoched_data,
+        sfreq=sfreq,
+        method="morlet",
+        fmin=4.0,
+        fmax=35.0,
+        n_freqs=32,
+        n_cycles=7.0
+    )
     
-    # 1. Extract channel
-    ch_name = st.selectbox("Select Channel", preprocessed_raw.ch_names)
-    data = preprocessed_raw.get_data()[preprocessed_raw.ch_names.index(ch_name)]
-    sfreq = preprocessed_raw.info['sfreq']
+    # 2. Apply decibel baseline normalization against a pre-stimulus baseline window
+    normalized_power = apply_baseline_correction(
+        power=power,
+        times=times,
+        baseline=(0.0, 1.0),
+        mode="db"
+    )
     
-    # 2. Compute TFR
-    power, freqs, times = compute_tfr(data, sfreq, method='morlet', fmin=4.0, fmax=40.0)
-    
-    # 3. Render linked plots
-    fig = create_linked_plots(data, preprocessed_raw.times, power, freqs, times, ch_name, "Morlet")
-    st.plotly_chart(fig, use_container_width=True)
-    
-    # 4. Return feature tensor for Module 6 / Module 7
+    # 3. Hand off the spectral power matrix to downstream feature extractors / classifiers
     return {
-        'power_matrix': power,
-        'freqs': freqs,
-        'times': times,
-        'channel': ch_name
+        "features": normalized_power,
+        "freqs": freqs,
+        "times": times,
+        "channel": target_channel
     }
 ```
 
 ---
 
-## ➕ How to Add a New Time-Frequency Method
+## How to Add a New Time-Frequency Method
 
-To add a new algorithm (e.g. Hilbert-Huang Transform or Wigner-Ville Distribution):
-1. In `core/time_frequency.py`, implement your function returning `(power, freqs, times)`:
+If you want to implement an additional spectral method (for example, Stockwell Transform or Wigner-Ville Distribution):
+
+1. **Implement the algorithm in `core/time_frequency.py`:**
+   Write a function matching the standard signature returning `(power, freqs, times)`:
    ```python
-   def compute_hilbert_tfr(data, sfreq, ...):
-       # Computation logic
+   def compute_custom_tfr(data, sfreq, freqs=None, ...):
+       # Your signal processing logic here
+       # Ensure power shape is (n_freqs, n_times)
        return power, freqs, times
    ```
-2. Add the method name to `compute_tfr()`:
+
+2. **Add a branch in `compute_tfr()`:**
    ```python
-   elif method == 'hilbert':
-       return compute_hilbert_tfr(data, sfreq, **kwargs)
+   elif method == 'custom':
+       return compute_custom_tfr(data, sfreq, **kwargs)
    ```
-3. Add UI parameter inputs in `components/sidebar.py`.
-4. Add automated test cases in `tests/test_time_frequency.py`.
+
+3. **Add user controls in `components/sidebar.py`:**
+   Add any new parameters to `render_analysis_controls()` inside the sidebar.
+
+4. **Add test coverage in `tests/test_time_frequency.py`:**
+   Write unit tests to verify output shapes, dtype consistency, and boundary handling.
 
 ---
 
-## 🧪 Automated Testing Instructions
+## Running the Automated Test Suite
 
-Run pytest with coverage or verbose mode:
+We use `pytest` for unit tests. Always run pytest via `python -m pytest` so that Python adds the repository root to `sys.path`:
+
 ```bash
-pytest tests/ -v
+python -m pytest tests/ -v
 ```
-All tests are strictly headless and execute within seconds without opening graphical windows.
+
+The test suite executes headlessly in a few seconds and tests:
+- Synthetic benchmark generation and raw signal integrity (`tests/test_data_loading.py`) 
+- Numerical validity of Morlet, Multitaper, STFT, baseline normalization modes and bandpower calculations (`tests/test_time_frequency.py`)
+- Parameter clamps, Nyquist checks and sanitization (`tests/test_validation.py`)
